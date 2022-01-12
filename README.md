@@ -15,6 +15,9 @@ This package contains nodes for controlling grohe sense devices via the followin
 https://idp2-apigw.cloud.grohe.com
 
 
+# WARNING
+This package is under construction.
+
 # Dependencies
 This package depends on the following libraries
 - Axios see https://github.com/axios/axios
@@ -22,9 +25,9 @@ This package depends on the following libraries
 
 # Disclaimer
 This package is under construction. It is not developed nor officially supported by the company grohe.
-The code was ported from C# and Java which can be found here:
-https://github.com/J0EK3R/Grohe.Ondus.Api
-https://github.com/FlorianSW/grohe-ondus-api-java
+The code was ported from C# and Java which can be found here: 
+https://github.com/J0EK3R/Grohe.Ondus.Api 
+https://github.com/FlorianSW/grohe-ondus-api-java 
 
 
 # Thanks for your donation
@@ -37,14 +40,19 @@ If you want to support this free project. Any help is welcome. You can donate by
 
 
 # Credits
-- FlorianSW for developing the initial version in JAVA
-- J0EK3R for porting the original JAVA implementation to C#
+- FlorianSW for developing the initial version in JAVA 
+- J0EK3R for porting the original JAVA implementation to C# 
 
 
 # Changelog
 Changes can be followed [here](/CHANGELOG.md)
 
 
+# General
+TODO:
+
+# Configuration
+TODO:
 
 # Grohe Sense Node
 TODO:
