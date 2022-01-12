@@ -1,0 +1,113 @@
+<!-- Created by Karl-Heinz Wind -->
+
+<!-- ------------------------------------------------------------------------------------------ -->
+<script type="text/javascript">
+    RED.nodes.registerType('grohe location', {
+        category: 'config',
+        defaults: {
+            location: { value: "", required: true },
+        },
+        credentials: {
+            username: { type: "text" },
+			password: { type: "password" },
+        },
+        label: function () {
+            return this.location;
+        },
+    });
+</script>
+
+<script type="text/x-red" data-template-name="grohe location">
+    <div class="form-row" style="min-width: 700px">
+        <div class="form-row">
+            <label for="node-config-input-location"><i class="fa fa-home"></i> Location</label>
+            <input type="text" id="node-config-input-location" placeholder="(Name of the location to connect to)">
+        </div>
+       
+        <hr align="middle"/>
+
+        <div class="form-row">
+			<label for="node-config-input-username"><i class="fa fa-user"></i> Username</label>
+			<input type="text" id="node-config-input-username" placeholder="Enter the username here">
+		</div>
+		<div class="form-row">
+			<label for="node-config-input-password"><i class="fa fa-key"></i> Password</label>
+			<input type="text" id="node-config-input-password" placeholder="Enter the password here)">
+		</div>
+	
+        <hr align="middle"/>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="grohe location">
+    <p>A configuration node that defines the location.</p>
+
+    <h3>Details</h3>
+    <p>It communicates with the grohe API server.</p>
+ </script>
+
+
+<!-- ------------------------------------------------------------------------------------------ -->
+
+<script type="text/javascript">
+    RED.nodes.registerType('grohe sense', {
+        category: 'Grohe Sense',
+        color: '#8DCEEB',
+        defaults: {
+			location: { value:"", type: "grohe location", required: true },
+            room: { value:"" },
+            appliance: { value:"" },
+            description: { value:"" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "grohe.png",
+        paletteLabel: "sense",
+        label: function () {
+            return this.description || this.appliance || "Grohe Sense";
+        },
+        labelStyle: function() {
+            return this.description?"node_label_italic":"";
+        }
+    });
+
+</script>
+
+<script type="text/x-red" data-template-name="grohe sense">
+    <div class="form-row">
+        <label for="node-input-location"><i class="fa fa-home"></i> Location</label>
+        <input type="text" id="node-input-location" placeholder="The name of your location">
+    </div>
+    <div class="form-row">
+        <label for="node-input-room"><i class="fa fa-hotel"></i> Room</label>
+        <input type="text" id="node-input-room" placeholder="The room in your location">
+    </div>
+    <div class="form-row">
+        <label for="node-input-description"><i class="fa fa-id-badge"></i> Name</label>
+        <input type="text" id="node-input-description" placeholder="The name of the device">
+    </div>
+    <div class="form-row">
+        <label for="node-input-description"><i class="fa fa-comment"></i> Description</label>
+        <input type="text" id="node-input-description" placeholder="The description of the device (optional)">
+    </div>  
+</script>
+
+<script type="text/x-red" data-help-name="grohe sense">
+    <p>A node that controls a grohe sense device.</p>
+
+    <h3>Configuration</h3>
+    
+	<p>Room where the device is located.</p>
+    <p>Name of the device.</p>
+    <p>Description of the device.</p>
+    
+    <h3>Inputs</h3>
+    <p>.</p>
+    
+
+    <h3>Outputs</h3>
+    <p>.</p>
+    <p><code>msg.payload</code></p>
+</script>
+
+
