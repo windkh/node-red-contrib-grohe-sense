@@ -4,9 +4,8 @@
 
 module.exports = function (RED) {
     "use strict";
-    var axios = require('axios').default;
-    
-	
+    var ondusApi = require('./ondusApi.js');
+    	
     // --------------------------------------------------------------------------------------------
     // The configuration node
     // holds the username and password
@@ -17,10 +16,17 @@ module.exports = function (RED) {
         let self = this;
 
         this.config = n;
-
-        // Reading configuration properties...
         this.location = n.location;
+
+        (async() => {
+            await ondusApi.login(this.credentials.username, this.credentials.password);
+            
+            // TODO:
+            // let response = await ondusApi.getLocations();
+            // let locations = response.text;
+        })()
     }
+
     RED.nodes.registerType('grohe location', GroheLocationNode, {
         credentials: {
             username: { type: "text" },

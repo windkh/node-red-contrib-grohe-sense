@@ -1,4 +1,4 @@
-# Grohe sense/guard nodes for node-red
+# Shelly nodes for node-red
 [![Platform](https://img.shields.io/badge/platform-Node--RED-red)](https://nodered.org)
 ![License](https://img.shields.io/github/license/windkh/node-red-contrib-grohe-sense.svg)
 [![NPM](https://img.shields.io/npm/v/node-red-contrib-grohe-sense?logo=npm)](https://www.npmjs.org/package/node-red-contrib-grohe-sense)
@@ -15,19 +15,19 @@ This package contains nodes for controlling grohe sense devices via the followin
 https://idp2-apigw.cloud.grohe.com
 
 
-# WARNING
-This package is under construction.
-
 # Dependencies
 This package depends on the following libraries
-- Axios see https://github.com/axios/axios
+- superagent
+- he
+- url
 
 
 # Disclaimer
 This package is under construction. It is not developed nor officially supported by the company grohe.
-The code was ported from C# and Java which can be found here: 
-https://github.com/J0EK3R/Grohe.Ondus.Api 
-https://github.com/FlorianSW/grohe-ondus-api-java 
+The code was ported from C# and Java and TypeScript which can be found here:
+https://github.com/J0EK3R/Grohe.Ondus.Api
+https://github.com/FlorianSW/grohe-ondus-api-java
+https://github.com/faune/homebridge-grohe-sense
 
 
 # Thanks for your donation
@@ -40,19 +40,15 @@ If you want to support this free project. Any help is welcome. You can donate by
 
 
 # Credits
-- FlorianSW for developing the initial version in JAVA 
-- J0EK3R for porting the original JAVA implementation to C# 
+- FlorianSW for developing the initial version in JAVA
+- J0EK3R for porting the original JAVA implementation to C#
+- faune for doing the great work in TypeScript. This made me port my code from axios to superagent. 
 
 
 # Changelog
 Changes can be followed [here](/CHANGELOG.md)
 
 
-# General
-TODO:
-
-# Configuration
-TODO:
 
 # Grohe Sense Node
 TODO:

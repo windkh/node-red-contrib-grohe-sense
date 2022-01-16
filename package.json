@@ -1,7 +1,7 @@
 {
     "name": "node-red-contrib-grohe-sense",
     "version": "0.1.1",
-    "description": "Grohe sense/guard nodes via ondus API.",
+    "description": "Grohe sense nodes via ondus API.",
     "node-red": {
         "nodes": {
             "grohe": "grohe/99-grohe.js"
@@ -10,16 +10,18 @@
     "keywords": [
         "node-red",
         "grohe",
-		"ondus",
-		"sense"
+        "ondus",
+        "sense"
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/windkh/node-red-contrib-grohe-sense"
+        "url": "https://github.com/windkh/node-red-grohe-sense"
     },
     "author": "Karl-Heinz Wind",
     "license": "MIT",
     "dependencies": {
-        "axios": "^0.24.0"
+        "he": "^1.2.0",
+        "superagent": "^7.0.2",
+        "url": "^0.11.0"
     }
 }
