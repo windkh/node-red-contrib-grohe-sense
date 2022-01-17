@@ -1,4 +1,4 @@
-# Shelly nodes for node-red
+# Grohe Sense nodes for node-red
 [![Platform](https://img.shields.io/badge/platform-Node--RED-red)](https://nodered.org)
 ![License](https://img.shields.io/github/license/windkh/node-red-contrib-grohe-sense.svg)
 [![NPM](https://img.shields.io/npm/v/node-red-contrib-grohe-sense?logo=npm)](https://www.npmjs.org/package/node-red-contrib-grohe-sense)
