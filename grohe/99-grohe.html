@@ -55,8 +55,8 @@
         color: '#8DCEEB',
         defaults: {
 			location: { value:"", type: "grohe location", required: true },
-            room: { value:"" },
-            appliance: { value:"" },
+            room: { value:"", required: true },
+            appliance: { value:"", required: true },
             description: { value:"" }
         },
         inputs: 1,
@@ -83,8 +83,8 @@
         <input type="text" id="node-input-room" placeholder="The room in your location">
     </div>
     <div class="form-row">
-        <label for="node-input-description"><i class="fa fa-id-badge"></i> Name</label>
-        <input type="text" id="node-input-description" placeholder="The name of the device">
+        <label for="node-input-appliance"><i class="fa fa-id-badge"></i> Name</label>
+        <input type="text" id="node-input-appliance" placeholder="The name of the device">
     </div>
     <div class="form-row">
         <label for="node-input-description"><i class="fa fa-comment"></i> Description</label>

@@ -6,7 +6,6 @@
 [![Downloads](https://img.shields.io/npm/dm/node-red-contrib-grohe-sense.svg)](https://www.npmjs.com/package/node-red-contrib-grohe-sense)
 [![Total Downloads](https://img.shields.io/npm/dt/node-red-contrib-grohe-sense.svg)](https://www.npmjs.com/package/node-red-contrib-grohe-sense)
 [![Package Quality](http://npm.packagequality.com/shield/node-red-contrib-grohe-sense.png)](http://packagequality.com/#?package=node-red-contrib-grohe-sense)
-![Build](https://img.shields.io/github/workflow/status/windkh/node-red-contrib-grohe-sense/Node.js%20CI?event=push)
 [![Open Issues](https://img.shields.io/github/issues-raw/windkh/node-red-contrib-grohe-sense.svg)](https://github.com/windkh/node-red-contrib-grohe-sense/issues)
 [![Closed Issues](https://img.shields.io/github/issues-closed-raw/windkh/node-red-contrib-grohe-sense.svg)](https://github.com/windkh/node-red-contrib-grohe-sense/issues?q=is%3Aissue+is%3Aclosed)
 ...
