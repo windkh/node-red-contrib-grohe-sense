@@ -19,11 +19,11 @@ module.exports = function (RED) {
         node.connected = false;
 
         node.appliancesByRoomName = {};
-
+        
         (async() => {
             node.session = await ondusApi.login(node.credentials.username, node.credentials.password);
             
-            let response = await ondusApi.getLocations(node.session);
+            let response = await node.session.getLocations();
             let locations = JSON.parse(response.text);
 
             for (let i = 0; i < locations.length; i++) {
@@ -31,13 +31,13 @@ module.exports = function (RED) {
                 if (location.name === node.locationName){
                     node.location = location;
                    
-                    let response2 = await ondusApi.getRooms(node.session, node.location.id);
+                    let response2 = await node.session.getRooms(node.location.id);
                     node.rooms = JSON.parse(response2.text);
                    
                     for (let j = 0; j < node.rooms.length; j++) {
                         let room = node.rooms [j];
 
-                        let response3 = await ondusApi.getAppliances(node.session, node.location.id, room.id);
+                        let response3 = await node.session.getAppliances(node.location.id, room.id);
                         let appliances = JSON.parse(response3.text);
                         node.appliancesByRoomName[room.name] = {
                             room : room,
@@ -46,6 +46,7 @@ module.exports = function (RED) {
                     }
 
                     node.connected = true;
+                    node.emit('initialized');
                     break;
                 }
             }
@@ -110,50 +111,77 @@ module.exports = function (RED) {
                
             node.locationId = node.config.locationId;
 
-            // TODO: check location, room, applicance
-            node.status({ fill: 'green', shape: 'ring', text: 'connected' });
+            node.status({ fill: 'green', shape: 'ring', text: 'initializing' });
 
-            this.on('input', async function (msg) {
+            node.onInitialized = function () {
+            
+                node.applianceIds = node.config.getApplianceIds(node.roomName, node.applianceName);
+                if (node.applianceIds !== undefined){
+                    node.status({ fill: 'green', shape: 'ring', text: 'connected' });
+    
+                    node.on('input', async function (msg) {
 
-                if (node.config.connected) {
+                        node.status({ fill: 'green', shape: 'ring', text: 'updating...' });
+                    
+                        let response1 = await node.config.session.getApplianceInfo(
+                            node.applianceIds.locationId,
+                            node.applianceIds.roomId,
+                            node.applianceIds.applianceId);
+                        let info = JSON.parse(response1.text);
+                        
+                        let response2 = await node.config.session.getApplianceStatus(
+                                node.applianceIds.locationId,
+                                node.applianceIds.roomId,
+                                node.applianceIds.applianceId);
+                        let status = JSON.parse(response2.text);
+                        
+                        let response3 = await node.config.session.getApplianceNotifications(
+                            node.applianceIds.locationId,
+                            node.applianceIds.roomId,
+                            node.applianceIds.applianceId);
+                        let notifications = JSON.parse(response3.text);
 
-                    node.status({ fill: 'green', shape: 'ring', text: 'updating...' });
-                
-                    let applianceIds = node.config.getApplianceIds(node.roomName, node.applianceName);
-                    let response1 = await ondusApi.getApplianceInfo(
-                        node.config.session,
-                        applianceIds.locationId,
-                        applianceIds.roomId,
-                        applianceIds.applianceId);
-                    let info = JSON.parse(response1.text);
-                    
-                    let response2 = await ondusApi.getApplianceStatus(
-                            node.config.session,
-                            applianceIds.locationId,
-                            applianceIds.roomId,
-                            applianceIds.applianceId);
-                    let status = JSON.parse(response2.text);
-                    
-                    let response3 = await ondusApi.getApplianceNotifications(
-                        node.config.session,
-                        applianceIds.locationId,
-                        applianceIds.roomId,
-                        applianceIds.applianceId);
-                    let notifications = JSON.parse(response3.text);
-                    
-                    msg.payload = {
-                        info : info,
-                        status : status,
-                        notifications : notifications
-                    };
-                    node.send([msg]);
-                    
-                    node.status({ fill: 'green', shape: 'ring', text: 'ok' });
+                        let result = {
+                            info : info,
+                            status : status,
+                            notifications : notifications,
+                        };
 
-                }
+                        if (info[0].type === ondusApi.OndusType.SenseGuard) {
+
+                            let response4 = await node.config.session.getApplianceCommand(
+                                node.applianceIds.locationId,
+                                node.applianceIds.roomId,
+                                node.applianceIds.applianceId);
+                            let command = JSON.parse(response4.text);
+                            result.command = command;
+                        }
+                       
+                        msg.payload = result;
+                        node.send([msg]);
+                        
+                        let notificationCount = notifications.length;
+                        if (notificationCount == 0){
+                            node.status({ fill: 'green', shape: 'ring', text: 'ok' });
+                        }
+                        else {
+                            node.status({ fill: 'orange', shape: 'ring', text: notificationCount + ' notifications' });
+                        }
+                    });
+                }   
                 else {
-                    node.status({ fill: 'yellow', shape: 'ring', text: 'not connected yet.' });
+                    node.status({ fill: 'red', shape: 'ring', text: node.applianceName + ' not found ' });
+                }     
+
+            };
+            node.config.addListener('initialized', node.onInitialized);
+
+            this.on('close', function () {
+                if (node.onInitialized) {
+                    node.config.removeListener('initialized', node.onInitialized);
                 }
+    
+                node.status({});
             });
         }
         else {
