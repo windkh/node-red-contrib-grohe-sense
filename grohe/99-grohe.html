@@ -57,6 +57,7 @@
 			location: { value:"", type: "grohe location", required: true },
             room: { value:"", required: true },
             appliance: { value:"", required: true },
+            devicetype: { value: "101", required: true },
             description: { value:"" }
         },
         inputs: 1,
@@ -85,6 +86,18 @@
     <div class="form-row">
         <label for="node-input-appliance"><i class="fa fa-id-badge"></i> Name</label>
         <input type="text" id="node-input-appliance" placeholder="The name of the device">
+    </div>
+    <div class="form-row">
+        <label for="node-input-devicetype"><i class="fa fa-tint"></i> Type</label>
+        <div style="display: inline-block; position: relative; width: 70%; height: 19.1333px;">
+        <div style="position: absolute; left: 0; right: 0;">
+          <select id="node-input-devicetype" style="width:100%">
+              <option value="101">Sense</option>
+              <option value="102">Sense Plus</option>
+              <option value="103">Sense Guard</option>
+          </select>
+        </div>
+        </div>
     </div>
     <div class="form-row">
         <label for="node-input-description"><i class="fa fa-comment"></i> Description</label>

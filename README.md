@@ -22,7 +22,10 @@ This package depends on the following libraries
 
 
 # Disclaimer
-This package is under construction. It is not developed nor officially supported by the company grohe.
+This package is not developed nor officially supported by the company Grohe.
+It is for demonstrating how to communicate to the devices using node-red.
+Use on your own risk!
+
 The code was ported from C# and Java and TypeScript which can be found here:
 https://github.com/J0EK3R/Grohe.Ondus.Api
 https://github.com/FlorianSW/grohe-ondus-api-java
@@ -48,10 +51,24 @@ If you want to support this free project. Any help is welcome. You can donate by
 Changes can be followed [here](/CHANGELOG.md)
 
 
-
 # Grohe Sense Node
-TODO:
+The node is able to get the status of a Grohe Sense, Grohe Plus or Grohe Guard node.
 
+
+## Sense
+To get the status simply send any msg.payload to the input.
+
+
+## Sense Guard
+To get the status simply send any msg.payload to the input.
+To send a command to open the valve you need to send the following message:
+```
+msg.payload = {  
+    command : {
+        valve_open: true,
+    }
+};
+```
 
 
 # License

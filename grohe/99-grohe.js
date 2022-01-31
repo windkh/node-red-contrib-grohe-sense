@@ -105,6 +105,7 @@ module.exports = function (RED) {
         node.location = config.location;
         node.roomName = config.room.trim();
 		node.applianceName = config.appliance.trim();
+        node.devicetype = Number(config.devicetype);
 
 		node.config = RED.nodes.getNode(node.location);
         if (node.config) {
@@ -121,51 +122,73 @@ module.exports = function (RED) {
     
                     node.on('input', async function (msg) {
 
-                        node.status({ fill: 'green', shape: 'ring', text: 'updating...' });
-                    
-                        let response1 = await node.config.session.getApplianceInfo(
-                            node.applianceIds.locationId,
-                            node.applianceIds.roomId,
-                            node.applianceIds.applianceId);
-                        let info = JSON.parse(response1.text);
-                        
-                        let response2 = await node.config.session.getApplianceStatus(
+                        try
+                        {
+                            node.status({ fill: 'green', shape: 'ring', text: 'updating...' });
+
+                            if(node.type === ondusApi.OndusType.SenseGuard){
+                                if (msg.payload !== undefined && msg.payload.command !== undefined){
+                                    let data = msg.payload;
+                                    data.type = node.devicetype;
+                                    let response = await node.config.session.setApplianceCommand(
+                                        node.applianceIds.locationId,
+                                        node.applianceIds.roomId,
+                                        node.applianceIds.applianceId,
+                                        data);
+                                    // Hint: respsonse is not used right now.
+                                }
+                            }
+                            
+                            let response1 = await node.config.session.getApplianceInfo(
                                 node.applianceIds.locationId,
                                 node.applianceIds.roomId,
                                 node.applianceIds.applianceId);
-                        let status = JSON.parse(response2.text);
-                        
-                        let response3 = await node.config.session.getApplianceNotifications(
-                            node.applianceIds.locationId,
-                            node.applianceIds.roomId,
-                            node.applianceIds.applianceId);
-                        let notifications = JSON.parse(response3.text);
-
-                        let result = {
-                            info : info,
-                            status : status,
-                            notifications : notifications,
-                        };
-
-                        if (info[0].type === ondusApi.OndusType.SenseGuard) {
-
-                            let response4 = await node.config.session.getApplianceCommand(
+                            let info = JSON.parse(response1.text);
+                            
+                            let response2 = await node.config.session.getApplianceStatus(
+                                    node.applianceIds.locationId,
+                                    node.applianceIds.roomId,
+                                    node.applianceIds.applianceId);
+                            let status = JSON.parse(response2.text);
+                            
+                            let response3 = await node.config.session.getApplianceNotifications(
                                 node.applianceIds.locationId,
                                 node.applianceIds.roomId,
                                 node.applianceIds.applianceId);
-                            let command = JSON.parse(response4.text);
-                            result.command = command;
-                        }
-                       
-                        msg.payload = result;
-                        node.send([msg]);
+                            let notifications = JSON.parse(response3.text);
+
+                            let result = {
+                                info : info,
+                                status : status,
+                                notifications : notifications,
+                            };
+
+                            if (info[0].type === ondusApi.OndusType.SenseGuard) {
+
+                                let response4 = await node.config.session.getApplianceCommand(
+                                    node.applianceIds.locationId,
+                                    node.applianceIds.roomId,
+                                    node.applianceIds.applianceId);
+                                let command = JSON.parse(response4.text);
+
+                                // Here timestamp could also be interessting in future.
+                                result.command = command.command;
+                            }
                         
-                        let notificationCount = notifications.length;
-                        if (notificationCount == 0){
-                            node.status({ fill: 'green', shape: 'ring', text: 'ok' });
+                            msg.payload = result;
+                            node.send([msg]);
+                            
+                            let notificationCount = notifications.length;
+                            if (notificationCount == 0){
+                                node.status({ fill: 'green', shape: 'ring', text: 'ok' });
+                            }
+                            else {
+                                node.status({ fill: 'yellow', shape: 'dot', text: notificationCount + ' notifications' });
+                            }
                         }
-                        else {
-                            node.status({ fill: 'orange', shape: 'ring', text: notificationCount + ' notifications' });
+                        catch (exception){
+                            let errorMessage = 'Caught exception:\r\n' + exception + '\r\nwhen processing message: \r\n' + JSON.stringify(msg);
+                            node.error(errorMessage, msg);
                         }
                     });
                 }   

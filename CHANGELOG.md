@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.0]
+### Support for sending commands to sense guard
+
+## [0.3.0]
+### Added support for getting values
+
 ## [0.1.0]
 ### Initial version
 
