@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.1]
+### added missing node red tags
+
 ## [0.4.0]
 ### Support for sending commands to sense guard
 
