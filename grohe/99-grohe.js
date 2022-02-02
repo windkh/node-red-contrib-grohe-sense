@@ -126,7 +126,7 @@ module.exports = function (RED) {
                         {
                             node.status({ fill: 'green', shape: 'ring', text: 'updating...' });
 
-                            if(node.type === ondusApi.OndusType.SenseGuard){
+                            if(node.devicetype === ondusApi.OndusType.SenseGuard){
                                 if (msg.payload !== undefined && msg.payload.command !== undefined){
                                     let data = msg.payload;
                                     data.type = node.devicetype;
