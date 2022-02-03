@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.5.2]
+## [0.5.3]
 ### allowed node-red 1.3.7 and nodejs 12.0.0
 
 ## [0.5.2]
