@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.5.2]
+### allowed node-red 1.0 and nodejs 10.0
+
 ## [0.5.1]
 ### automated publish
 
