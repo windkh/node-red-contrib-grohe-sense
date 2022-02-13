@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.5.4]
+## [0.5.4] [2022-02-13]
 ### removed version info
 
 ## [0.5.3]
