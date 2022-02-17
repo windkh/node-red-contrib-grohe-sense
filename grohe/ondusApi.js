@@ -208,9 +208,9 @@ class OndusSession {
             });
     };
 
-    post(string, data) {
+    post(url, data) {
         let session = this;
-        return new Promise<superagent.Response>((resolve, reject) => {
+        return new Promise(function (resolve, reject) {
             superagent
                 .post(url)
                 .set('Content-Type', 'application/json')

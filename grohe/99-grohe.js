@@ -20,37 +20,53 @@ module.exports = function (RED) {
 
         node.appliancesByRoomName = {};
         
-        (async() => {
-            node.session = await ondusApi.login(node.credentials.username, node.credentials.password);
-            
-            let response = await node.session.getLocations();
-            let locations = JSON.parse(response.text);
+        if(node.credentials !== undefined && node.credentials.username !== undefined && node.credentials.password !== undefined 
+            && node.credentials.username !== '' && node.credentials.password !== '') {
 
-            for (let i = 0; i < locations.length; i++) {
-                let location = locations[i];
-                if (location.name === node.locationName){
-                    node.location = location;
-                   
-                    let response2 = await node.session.getRooms(node.location.id);
-                    node.rooms = JSON.parse(response2.text);
-                   
-                    for (let j = 0; j < node.rooms.length; j++) {
-                        let room = node.rooms [j];
+            (async() => {
 
-                        let response3 = await node.session.getAppliances(node.location.id, room.id);
-                        let appliances = JSON.parse(response3.text);
-                        node.appliancesByRoomName[room.name] = {
-                            room : room,
-                            appliances : appliances,
-                        };
+                try {
+                    node.session = await ondusApi.login(node.credentials.username, node.credentials.password);
+                    
+                    let response = await node.session.getLocations();
+                    let locations = JSON.parse(response.text);
+
+                    for (let i = 0; i < locations.length; i++) {
+                        let location = locations[i];
+                        if (location.name === node.locationName){
+                            node.location = location;
+                        
+                            let response2 = await node.session.getRooms(node.location.id);
+                            node.rooms = JSON.parse(response2.text);
+                        
+                            for (let j = 0; j < node.rooms.length; j++) {
+                                let room = node.rooms [j];
+
+                                let response3 = await node.session.getAppliances(node.location.id, room.id);
+                                let appliances = JSON.parse(response3.text);
+                                node.appliancesByRoomName[room.name] = {
+                                    room : room,
+                                    appliances : appliances,
+                                };
+                            }
+
+                            node.connected = true;
+                            node.emit('initialized');
+                            break;
+                        }
                     }
 
-                    node.connected = true;
-                    node.emit('initialized');
-                    break;
                 }
-            }
-        })()
+                catch (exception){
+                    node.connected = false;
+                    node.emit('error', exception);
+                }    
+            })()
+        }
+        else {
+            node.connected = false;
+            node.emit('error', 'credentials missing');
+        }
 
         this.on('close', function (done) {
             node.session = {};
@@ -112,7 +128,7 @@ module.exports = function (RED) {
                
             node.locationId = node.config.locationId;
 
-            node.status({ fill: 'green', shape: 'ring', text: 'initializing' });
+            node.status({ fill: 'red', shape: 'ring', text: 'initializing' });
 
             node.onInitialized = function () {
             
@@ -199,9 +215,18 @@ module.exports = function (RED) {
             };
             node.config.addListener('initialized', node.onInitialized);
 
+            node.onError = function (errorMessage) {
+                node.status({ fill: 'red', shape: 'ring', text: errorMessage });
+            };
+            node.config.addListener('error', node.onError);
+
             this.on('close', function () {
                 if (node.onInitialized) {
                     node.config.removeListener('initialized', node.onInitialized);
+                }
+
+                if (node.onError) {
+                    node.config.removeListener('error', node.onError);
                 }
     
                 node.status({});
