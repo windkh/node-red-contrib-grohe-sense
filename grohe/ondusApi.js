@@ -135,7 +135,7 @@ class OndusSession {
                         session.tokenUrl = response.header.location.replace('ondus://', 'https://');
                         resolve(response);
                     } else {
-                        reject('Unable to acquiring access token from redirect URL');
+                        reject('Login for user ' + username + ' into grohe cloud failed.');
                     }
                 });
             });

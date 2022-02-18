@@ -59,13 +59,15 @@ module.exports = function (RED) {
                 }
                 catch (exception){
                     node.connected = false;
-                    node.emit('error', exception);
+                    node.emit('initializeFailed', exception);
+                    node.warn(exception);
                 }    
             })()
         }
         else {
             node.connected = false;
-            node.emit('error', 'credentials missing');
+            node.emit('initializeFailed', 'credentials missing');
+            node.warn('credentials missing');
         }
 
         this.on('close', function (done) {
@@ -218,7 +220,7 @@ module.exports = function (RED) {
             node.onError = function (errorMessage) {
                 node.status({ fill: 'red', shape: 'ring', text: errorMessage });
             };
-            node.config.addListener('error', node.onError);
+            node.config.addListener('initializeFailed', node.onError);
 
             this.on('close', function () {
                 if (node.onInitialized) {
@@ -226,7 +228,7 @@ module.exports = function (RED) {
                 }
 
                 if (node.onError) {
-                    node.config.removeListener('error', node.onError);
+                    node.config.removeListener('initializeFailed', node.onError);
                 }
     
                 node.status({});
