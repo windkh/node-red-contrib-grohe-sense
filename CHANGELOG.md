@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.6.2] [2022-02-19]
+### updated icon
+
 ## [0.6.1] [2022-02-18]
 ### improved error handling
 
