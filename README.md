@@ -71,6 +71,23 @@ msg.payload = {
 ```
 
 
+## Getting Historical Data
+To read out the internal measurement history you need to specify the start and end data as follows:
+```
+let end = new Date();
+let start = new Date();
+start.setDate(end.getDate() - 2); // last 2 days.
+
+msg.payload = {  
+    data : {
+        from : startDate,
+		to : endData
+    }
+};
+```
+
+
+
 # License
 
 Author: Karl-Heinz Wind

@@ -28,22 +28,22 @@ module.exports = function (RED) {
                 try {
                     node.session = await ondusApi.login(node.credentials.username, node.credentials.password);
                     
-                    let response = await node.session.getLocations();
-                    let locations = JSON.parse(response.text);
+                    let response = await node.session.getDahsboard();
+                    let dashboard = JSON.parse(response.text);
+
+                    let locations = dashboard.locations
 
                     for (let i = 0; i < locations.length; i++) {
                         let location = locations[i];
                         if (location.name === node.locationName){
                             node.location = location;
                         
-                            let response2 = await node.session.getRooms(node.location.id);
-                            node.rooms = JSON.parse(response2.text);
+                            node.rooms = location.rooms;
                         
                             for (let j = 0; j < node.rooms.length; j++) {
                                 let room = node.rooms [j];
 
-                                let response3 = await node.session.getAppliances(node.location.id, room.id);
-                                let appliances = JSON.parse(response3.text);
+                                let appliances = room.appliances;
                                 node.appliancesByRoomName[room.name] = {
                                     room : room,
                                     appliances : appliances,
@@ -156,30 +156,56 @@ module.exports = function (RED) {
                                     // Hint: respsonse is not used right now.
                                 }
                             }
-                            
-                            let response1 = await node.config.session.getApplianceInfo(
+
+                            let responseInfo = await node.config.session.getApplianceInfo(
                                 node.applianceIds.locationId,
                                 node.applianceIds.roomId,
                                 node.applianceIds.applianceId);
-                            let info = JSON.parse(response1.text);
+                            let info = JSON.parse(responseInfo.text);
                             
-                            let response2 = await node.config.session.getApplianceStatus(
+                            let responseStatus = await node.config.session.getApplianceStatus(
+                                node.applianceIds.locationId,
+                                node.applianceIds.roomId,
+                                node.applianceIds.applianceId);
+                            let status = JSON.parse(responseStatus.text);
+                            
+                            let responseNotifications = await node.config.session.getApplianceNotifications(
+                                node.applianceIds.locationId,
+                                node.applianceIds.roomId,
+                                node.applianceIds.applianceId);
+                            let notifications = JSON.parse(responseNotifications.text);
+   
+                            let data;
+                            if(msg.payload !== undefined && msg.payload.data !== undefined ){
+                                let fromDate = msg.payload.data.from;
+                                let toDate = msg.payload.data.to;
+
+                                let responseData = await node.config.session.getApplianceData(
                                     node.applianceIds.locationId,
                                     node.applianceIds.roomId,
-                                    node.applianceIds.applianceId);
-                            let status = JSON.parse(response2.text);
-                            
-                            let response3 = await node.config.session.getApplianceNotifications(
-                                node.applianceIds.locationId,
-                                node.applianceIds.roomId,
-                                node.applianceIds.applianceId);
-                            let notifications = JSON.parse(response3.text);
+                                    node.applianceIds.applianceId,
+                                    fromDate,
+                                    toDate);
+                                data = JSON.parse(responseData.text);
+                            }
 
-                            let result = {
-                                info : info,
-                                status : status,
-                                notifications : notifications,
-                            };
+                            let result = {};
+
+                            if(info != null){
+                                result.info = info;
+                            }
+
+                            if(status != null){
+                                result.status = status;
+                            }
+                            
+                            if(notifications != null){
+                                result.notifications = notifications;
+                            }
+
+                            if(data != null){
+                                result.data = data.data;
+                            }
 
                             if (info[0].type === ondusApi.OndusType.SenseGuard) {
 
@@ -188,15 +214,19 @@ module.exports = function (RED) {
                                     node.applianceIds.roomId,
                                     node.applianceIds.applianceId);
                                 let command = JSON.parse(response4.text);
-
-                                // Here timestamp could also be interessting in future.
                                 result.command = command.command;
+                                // Here timestamp could also be interessting in future.
                             }
                         
+
                             msg.payload = result;
                             node.send([msg]);
                             
-                            let notificationCount = notifications.length;
+                            let notificationCount = 0;
+                            if(notifications !== undefined){
+                                notificationCount = notifications.length;
+                            }
+
                             if (notificationCount == 0){
                                 node.status({ fill: 'green', shape: 'ring', text: 'ok' });
                             }

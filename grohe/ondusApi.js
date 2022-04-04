@@ -228,6 +228,11 @@ class OndusSession {
             });
     }
 
+    getDahsboard() {
+        let url = apiUrl + '/dashboard';
+        return this.get(url);
+    }
+
     getLocations() {
         let url = apiUrl + '/locations';
         return this.get(url);
@@ -250,6 +255,11 @@ class OndusSession {
 
     getApplianceNotifications(locationId, roomId, applianceId) {
         let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/notifications';
+        return this.get(url);
+    }
+
+    getApplianceNotificationId(locationId, roomId, applianceId, notificationId) {
+        let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/notifications/' + notificationId;
         return this.get(url);
     }
 
@@ -300,6 +310,7 @@ let OndusType = {
     Sense : 101,
     SensePlus : 102,
     SenseGuard : 103,
+    // BlueHome : 104 // TDOD
 };
 
 

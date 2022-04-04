@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] [2022-04-04]
+### historical data can be read out now: see examples
+
 ## [0.6.2] [2022-02-19]
 ### updated icon
 
