@@ -80,12 +80,25 @@ start.setDate(end.getDate() - 2); // last 2 days.
 
 msg.payload = {  
     data : {
-        from : startDate,
-		to : endData
+        from : start,
+		to : end
     }
 };
 ```
+Date can be passed in milliseconds format, too: e.g. Date.now
 
+```
+let now = Date.now();
+let end = now;
+let start = now - 24 * 60 * 60000;
+
+msg.payload = {
+    data : {
+        from : start,
+        to : end
+    }
+}
+```
 
 
 # License

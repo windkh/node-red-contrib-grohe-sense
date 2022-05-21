@@ -6,6 +6,12 @@ module.exports = function (RED) {
     "use strict";
     var ondusApi = require('./ondusApi.js');
     	
+    // check if the input is already a date, if not it is probably a value in milliseconds. 
+    function convertToDate(input) {
+        let date = new Date(input);
+        return date;
+    }
+
     // --------------------------------------------------------------------------------------------
     // The configuration node
     // holds the username and password
@@ -177,16 +183,23 @@ module.exports = function (RED) {
    
                             let data;
                             if(msg.payload !== undefined && msg.payload.data !== undefined ){
-                                let fromDate = msg.payload.data.from;
-                                let toDate = msg.payload.data.to;
+                                let fromDate = convertToDate(msg.payload.data.from);
+                                let toDate = convertToDate(msg.payload.data.to);
 
-                                let responseData = await node.config.session.getApplianceData(
-                                    node.applianceIds.locationId,
-                                    node.applianceIds.roomId,
-                                    node.applianceIds.applianceId,
-                                    fromDate,
-                                    toDate);
-                                data = JSON.parse(responseData.text);
+                                try {
+                                    let responseData = await node.config.session.getApplianceData(
+                                        node.applianceIds.locationId,
+                                        node.applianceIds.roomId,
+                                        node.applianceIds.applianceId,
+                                        fromDate,
+                                        toDate);
+                                    data = JSON.parse(responseData.text);
+                                }
+                                catch(exception){
+                                    let errorMessage = 'getApplianceData failed: ' + exception.message;
+                                    node.error(errorMessage, msg);
+                                    node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+                                }
                             }
 
                             let result = {};
@@ -208,7 +221,6 @@ module.exports = function (RED) {
                             }
 
                             if (info[0].type === ondusApi.OndusType.SenseGuard) {
-
                                 let response4 = await node.config.session.getApplianceCommand(
                                     node.applianceIds.locationId,
                                     node.applianceIds.roomId,
@@ -218,7 +230,6 @@ module.exports = function (RED) {
                                 // Here timestamp could also be interessting in future.
                             }
                         
-
                             msg.payload = result;
                             node.send([msg]);
                             
@@ -235,8 +246,9 @@ module.exports = function (RED) {
                             }
                         }
                         catch (exception){
-                            let errorMessage = 'Caught exception:\r\n' + exception + '\r\nwhen processing message: \r\n' + JSON.stringify(msg);
+                            let errorMessage = 'Caught exception: ' + exception.message;
                             node.error(errorMessage, msg);
+                            node.status({ fill: 'red', shape: 'ring', text: 'failed' });
                         }
                     });
                 }   

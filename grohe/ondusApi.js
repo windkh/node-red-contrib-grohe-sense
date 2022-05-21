@@ -156,7 +156,7 @@ class OndusSession {
                             session.refreshTokenExpiresIn = response.body.refresh_expires_in;
                             resolve(response);
                         } else {
-                            reject(response);
+                            reject(error);
                         }
                     } else {
                         reject(error);
@@ -182,7 +182,7 @@ class OndusSession {
                             session.accessTokenExpiresIn = response.body.expires_in;
                             resolve(response);
                         } else {
-                            reject(response);              
+                            reject("Failed to refresh access token");              
                         }
                     }
                 });
@@ -199,8 +199,7 @@ class OndusSession {
                 .set('accept', 'json')
                 .end((error, response) => {
                     if (error) {
-                        const errMsg = 'get(): Unexpected server response:' + error;
-                        reject(errMsg);
+                        reject(error);
                     } else {
                         resolve(response);
                     }
@@ -219,8 +218,7 @@ class OndusSession {
                 .send(data)
                 .end((error, response) => {
                     if (error) {
-                        const errMsg = 'post(): Unexpected server response:' + error;
-                        reject(errMsg);
+                        reject(error);
                     } else {
                         resolve(response);
                     }
