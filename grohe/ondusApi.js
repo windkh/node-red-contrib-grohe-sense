@@ -60,31 +60,36 @@ class OndusSession {
             superagent
                 .get(loginUrl)
                 .end((error, response) => {
-                    if(response.status == 200){
-                        let page = response.text;
-            
-                        let regEx = new RegExp(actionPattern);
-                        let match = regEx.exec(page);
-                        if (match !== null) {
-                            var actionUrlText = match[0].replace(actionPrefix, '');
-                            let encodedActionUrl = actionUrlText.substring(1, actionUrlText.length - 1);
-                            
-                            session.actionUrl = he.decode(encodedActionUrl);
+                    if(response !== undefined){
+                        if(response.status == 200){
+                            let page = response.text;
+                
+                            let regEx = new RegExp(actionPattern);
+                            let match = regEx.exec(page);
+                            if (match !== null) {
+                                var actionUrlText = match[0].replace(actionPrefix, '');
+                                let encodedActionUrl = actionUrlText.substring(1, actionUrlText.length - 1);
+                                
+                                session.actionUrl = he.decode(encodedActionUrl);
+                                session.cookie = response.header['set-cookie'];
+                                resolve(response);
+                            }
+                            else {
+                                reject("action not found in webform.");
+                            }
+                        }
+                        else if(response.status == 302) {
+                            // TODO: not tested!!!
                             session.cookie = response.header['set-cookie'];
+                            session.tokenUrl = response.header.Location;
                             resolve(response);
                         }
                         else {
-                            reject("action not found in webform.");
+                            reject("Failed to get response from " + loginUrl);
                         }
                     }
-                    else if(response.status == 302) {
-                        // TODO: not tested!!!
-                        session.cookie = response.header['set-cookie'];
-                        session.tokenUrl = response.header.Location;
-                        resolve(response);
-                    }
                     else {
-                        reject("Failed to get response from " + loginUrl);
+                        reject(error);
                     }
                 });
         });
