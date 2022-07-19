@@ -28,6 +28,7 @@ class OndusSession {
         //     accessToken : '',
         //     accessTokenExpiresIn : '',
         //     cookie : '',
+        //     refreshTimer : ''
         // };
         let actionUrl;
     };
@@ -60,36 +61,31 @@ class OndusSession {
             superagent
                 .get(loginUrl)
                 .end((error, response) => {
-                    if(response !== undefined){
-                        if(response.status == 200){
-                            let page = response.text;
-                
-                            let regEx = new RegExp(actionPattern);
-                            let match = regEx.exec(page);
-                            if (match !== null) {
-                                var actionUrlText = match[0].replace(actionPrefix, '');
-                                let encodedActionUrl = actionUrlText.substring(1, actionUrlText.length - 1);
-                                
-                                session.actionUrl = he.decode(encodedActionUrl);
-                                session.cookie = response.header['set-cookie'];
-                                resolve(response);
-                            }
-                            else {
-                                reject("action not found in webform.");
-                            }
-                        }
-                        else if(response.status == 302) {
-                            // TODO: not tested!!!
+                    if(response.status == 200){
+                        let page = response.text;
+            
+                        let regEx = new RegExp(actionPattern);
+                        let match = regEx.exec(page);
+                        if (match !== null) {
+                            var actionUrlText = match[0].replace(actionPrefix, '');
+                            let encodedActionUrl = actionUrlText.substring(1, actionUrlText.length - 1);
+                            
+                            session.actionUrl = he.decode(encodedActionUrl);
                             session.cookie = response.header['set-cookie'];
-                            session.tokenUrl = response.header.Location;
                             resolve(response);
                         }
                         else {
-                            reject("Failed to get response from " + loginUrl);
+                            reject("action not found in webform.");
                         }
                     }
+                    else if(response.status == 302) {
+                        // TODO: not tested!!!
+                        session.cookie = response.header['set-cookie'];
+                        session.tokenUrl = response.header.Location;
+                        resolve(response);
+                    }
                     else {
-                        reject(error);
+                        reject("Failed to get response from " + loginUrl);
                     }
                 });
         });
@@ -192,6 +188,21 @@ class OndusSession {
                     }
                 });
             });
+    };
+
+    start() {
+        let session = this;
+
+        let interval = 1000 * session.accessTokenExpiresIn / 2; // 1800s
+        session.refreshTimer = setInterval(function() {
+            session.refreshAccessToken();
+        }, interval);
+    };
+
+    stop() {
+        let session = this;
+
+        clearInterval(session.refreshTimer);
     };
 
     get(url) {
@@ -305,7 +316,13 @@ async function login(username, password) {
     await session.getTokenUrl(username, password);
     await session.getRefreshToken();
     
+    session.start();
     return session;
+}
+
+function logoff(session) {
+    session.stop();
+    session.accessToken = '';
 }
 
 // Exported Constants
@@ -318,5 +335,6 @@ let OndusType = {
 
 
 exports.login = login;
+exports.logoff = logoff;
 exports.OndusType = Object.freeze(OndusType); 
 

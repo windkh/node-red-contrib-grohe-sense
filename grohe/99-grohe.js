@@ -77,6 +77,7 @@ module.exports = function (RED) {
         }
 
         this.on('close', function (done) {
+            ondusApi.logoff(node.session);
             node.session = {};
             node.location = {};
             node.rooms = {};
