@@ -61,31 +61,35 @@ class OndusSession {
             superagent
                 .get(loginUrl)
                 .end((error, response) => {
-                    if(response.status == 200){
-                        let page = response.text;
-            
-                        let regEx = new RegExp(actionPattern);
-                        let match = regEx.exec(page);
-                        if (match !== null) {
-                            var actionUrlText = match[0].replace(actionPrefix, '');
-                            let encodedActionUrl = actionUrlText.substring(1, actionUrlText.length - 1);
-                            
-                            session.actionUrl = he.decode(encodedActionUrl);
+                    if (error) {
+                        reject(error);
+                    } else {
+                        if(response.status == 200){
+                            let page = response.text;
+                
+                            let regEx = new RegExp(actionPattern);
+                            let match = regEx.exec(page);
+                            if (match !== null) {
+                                var actionUrlText = match[0].replace(actionPrefix, '');
+                                let encodedActionUrl = actionUrlText.substring(1, actionUrlText.length - 1);
+                                
+                                session.actionUrl = he.decode(encodedActionUrl);
+                                session.cookie = response.header['set-cookie'];
+                                resolve(response);
+                            }
+                            else {
+                                reject("action not found in webform.");
+                            }
+                        }
+                        else if(response.status == 302) {
+                            // TODO: not tested!!!
                             session.cookie = response.header['set-cookie'];
+                            session.tokenUrl = response.header.Location;
                             resolve(response);
                         }
                         else {
-                            reject("action not found in webform.");
+                            reject("Failed to get response from " + loginUrl);
                         }
-                    }
-                    else if(response.status == 302) {
-                        // TODO: not tested!!!
-                        session.cookie = response.header['set-cookie'];
-                        session.tokenUrl = response.header.Location;
-                        resolve(response);
-                    }
-                    else {
-                        reject("Failed to get response from " + loginUrl);
                     }
                 });
         });
@@ -130,13 +134,17 @@ class OndusSession {
                 .buffer(false)
                 .redirects(0)
                 .end((error, response) => {
-                    if (response && response.header.location) {
-                    
-                        let status = response.status;
-                        session.tokenUrl = response.header.location.replace('ondus://', 'https://');
-                        resolve(response);
+                    if (error) {
+                        reject(error);
                     } else {
-                        reject('Login for user ' + username + ' into grohe cloud failed.');
+                        if (response && response.header.location) {
+                        
+                            let status = response.status;
+                            session.tokenUrl = response.header.location.replace('ondus://', 'https://');
+                            resolve(response);
+                        } else {
+                            reject('Login for user ' + username + ' into grohe cloud failed.');
+                        }
                     }
                 });
             });
@@ -149,7 +157,9 @@ class OndusSession {
                 .get(session.tokenUrl)
                 .set('Cookie', session.cookie)
                 .end( (error, response) => {
-                    if (response) {
+                    if (error) {
+                        reject(error);
+                    } else {
                         if (response.body.access_token && response.body.refresh_token) {
                             session.accessToken = response.body.access_token;
                             session.accessTokenExpiresIn = response.body.expires_in;
@@ -157,10 +167,8 @@ class OndusSession {
                             session.refreshTokenExpiresIn = response.body.refresh_expires_in;
                             resolve(response);
                         } else {
-                            reject(error);
+                            reject("getRefreshToken failed to get token.");
                         }
-                    } else {
-                        reject(error);
                     }
                 });
             });
