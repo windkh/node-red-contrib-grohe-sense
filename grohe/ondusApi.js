@@ -133,18 +133,15 @@ class OndusSession {
                 .send(content)
                 .buffer(false)
                 .redirects(0)
-                .end((error, response) => {
-                    if (error) {
-                        reject(error);
+                .end((error, response) => {    
+                    // Note that error can be true when status is 302 which means Found and is a success.
+                    if (response && response.header.location) {
+                    
+                        let status = response.status;
+                        session.tokenUrl = response.header.location.replace('ondus://', 'https://');
+                        resolve(response);
                     } else {
-                        if (response && response.header.location) {
-                        
-                            let status = response.status;
-                            session.tokenUrl = response.header.location.replace('ondus://', 'https://');
-                            resolve(response);
-                        } else {
-                            reject('Login for user ' + username + ' into grohe cloud failed.');
-                        }
+                        reject('Login for user ' + username + ' into grohe cloud failed:/n' + error );
                     }
                 });
             });
