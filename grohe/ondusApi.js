@@ -124,7 +124,11 @@ class OndusSession {
         let session = this;
         return new Promise(function (resolve, reject) {
             
-            let content = 'username=' + username + '&password=' + password;
+            const form = new URLSearchParams();
+            form.set('username', username);
+            form.set('password', password);
+
+            let content = form.toString();
 
             superagent
                 .post(session.actionUrl)

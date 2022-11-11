@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.12.0] [2022-11-11]
+### fixed - [#9](https://github.com/windkh/node-red-contrib-grohe-sense/issues/9) 
+
 ## [0.11.0] [2022-09-03]
 ### fixed - [#7](https://github.com/windkh/node-red-contrib-grohe-sense/issues/7) 
 
