@@ -340,6 +340,103 @@ function logoff(session) {
     session.accessToken = '';
 }
 
+function convertNotification(notification) {
+    // credits: https://github.com/faune/homebridge-grohe-sense/blob/master/src/ondusNotification.ts
+    // credits: https://github.com/FlorianSW/grohe-ondus-api-java/blob/master/src/main/java/io/github/floriansw/ondus/api/model/Notification.java
+    let notificationMessageByCategoryAndType = {
+        'category' : {
+            // NOTIFICATION_CATEGORY_FIRMWARE
+            10 : {
+                'text' : 'Firmware',
+                'type'  : {
+                    10  : 'Integration of sense successful',
+                    60  : 'Firmware update available',
+                    410 : 'Integration of sense guard successful',
+                    460 : 'Firmware update available',
+                    555 : 'Blue: auto flush active',
+                    556 : 'Blue: auto flush inactive',
+                    557 : 'Catridge empty',
+                    559 : 'Cleaning complete',
+                    561 : 'Order fully shipped',
+                    563 : 'Order fully delivered',
+                    566 : 'Order partially shipped',
+                    560 : 'Firmware update for blue available',
+                    601 : 'Nest away mode automatic control off',
+                    602 : 'Nest home mode automatic control off',
+                },  
+            },
+            // NOTIFICATION_CATEGORY_WARNING
+            20 : {
+                'text' : 'Warning',
+                'type' : {
+                    11  : `Battery is at critical level`,
+                    12  : 'Battery is empty and must be changed',
+                    20  : 'Temperature levels have dropped below the minimum configured limit',
+                    21  : 'Temperature levels have exceeded the maximum configured limit',
+                    30  : 'Humidity levels have dropped below the minimum configured limit',
+                    31  : 'Humidity levels have exceeded the maximum configured limit',
+                    40  : 'Frost warning!',
+                    80  : 'Sense  lost WiFi',
+                    320 : 'Unusual water consumption detected - water has been SHUT OFF',
+                    321 : 'Unusual water consumption detected - water still ON',
+                    330 : 'Micro leakage detected',
+                    332 : 'Micro leakage detected over several days', // Unsure if this is correct?
+                    340 : 'Frost warning! Current temperature is',
+                    380 : 'Sense guard lost WiFi',
+                    420 : 'Blind spot',
+                    421 : 'Blind spot not shut off',
+                    550 : 'Blue filter low',
+                    551 : 'Blue CO2 low',
+                    552 : 'Blue empty filter',
+                    553 : 'Blue empty CO2',
+                    558 : 'Cleaning',
+                    564 : 'Filter stock empty',
+                    565 : 'CO2 stock empty',
+                    580 : 'Blue no connection',
+                    603 : 'Nest no response guard open',
+                    604 : 'Nest no response guard close',
+                },
+            },
+            // NOTIFICATION_CATEGORY_CRITICAL
+            /* Notifications in this category will always trigger leakServices */
+            30 : {
+                'text' : 'Critical',
+                'type' : {
+                    0   : 'Flooding detected - water has been SHUT OFF',
+                    50  : 'Sensor moved',
+                    90  : 'System error 90',
+                    100 : 'System error 100',
+                    101 : 'RTC error',
+                    102 : 'Acceleration sensor',
+                    103 : 'System out of service',
+                    104 : 'System memory error',
+                    105 : 'System relative temperature',
+                    106 : 'System water detection error',
+                    107 : 'System button error',
+                    310 : 'Pipe break - water has been SHUT OFF',
+                    390 : 'System error 390',
+                    400 : 'Maximum water volume reached - water has been SHUT OFF',
+                    430 : 'Water detected - water has been SHUT OFF',
+                    431 : 'Water detected - water still ON',
+                },
+            },
+        },
+    };
+
+    let category = notification.category;
+    let type = notification.type;
+    let message = notificationMessageByCategoryAndType.category[category].type[type];
+    let categoryText = notificationMessageByCategoryAndType.category[category].text;
+
+    let convertedNotification = {
+        category : categoryText,
+        type : type,
+        message : message,
+        notification : notification
+    }
+    return convertedNotification;
+}
+
 // Exported Constants
 let OndusType = {
     Sense : 101,
@@ -351,5 +448,6 @@ let OndusType = {
 
 exports.login = login;
 exports.logoff = logoff;
+exports.convertNotification = convertNotification;
 exports.OndusType = Object.freeze(OndusType); 
 

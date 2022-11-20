@@ -4,12 +4,220 @@
 
 module.exports = function (RED) {
     "use strict";
-    var ondusApi = require('./ondusApi.js');
+    let ondusApi = require('./ondusApi.js');
     	
     // check if the input is already a date, if not it is probably a value in milliseconds. 
     function convertToDate(input) {
         let date = new Date(input);
         return date;
+    }
+
+    // Converts a status object to json. 
+    function convertStatus(status) {
+        let convertedStatus = {};
+
+        for (let i=0; i < status.length; i++) {
+            let item = status[i];
+            convertedStatus[item.type] = item.value;
+        }
+
+        return convertedStatus;
+    }
+
+    function getMin(newValue, oldValue) {   
+        if (isNaN(oldValue)) {
+            return newValue;
+        }                   
+        if (newValue < oldValue) {
+            return newValue;
+        }
+        else {
+            return oldValue;
+        }
+    }
+
+    function getMax(newValue, oldValue) { 
+        if (isNaN(oldValue)) {
+            return newValue;
+        }                 
+        if (newValue > oldValue) {
+            return newValue;
+        }
+        else {
+            return oldValue;
+        }
+    }
+
+    function convertMeasurement(measurement) {
+        let minTemperature = Number.NaN;
+        let maxTemperature = Number.NaN;
+        let minTemperatureGuard = Number.NaN;
+        let maxTemperatureGuard = Number.NaN;
+        let minHumidity = Number.NaN;
+        let maxHumidity = Number.NaN;
+        let minFlowrate = Number.NaN;
+        let maxFlowrate = Number.NaN;
+        let minPressure = Number.NaN;
+        let maxPressure = Number.NaN;
+        
+        let length = measurement.length;
+        for (let i=0; i < length; i++) {
+            let item = measurement[i];
+
+            let temperature = item.temperature;
+            minTemperature = getMin(temperature, minTemperature);
+            maxTemperature = getMax(temperature, maxTemperature);
+
+            let temperatureGuard = item.temperature_guard;
+            minTemperatureGuard = getMin(temperatureGuard, minTemperatureGuard);
+            maxTemperatureGuard = getMax(temperatureGuard, maxTemperatureGuard);
+
+            let humidity = item.humidity;
+            minHumidity = getMin(humidity, minHumidity);
+            maxHumidity = getMax(humidity, maxHumidity);
+            
+            let flowrate = item.flowrate;
+            minFlowrate = getMin(flowrate, minFlowrate);
+            maxFlowrate = getMax(flowrate, maxFlowrate);
+    
+            let pressure = item.pressure;
+            minPressure = getMin(pressure, minPressure);
+            maxPressure = getMax(pressure, maxPressure);
+        }
+
+        let from = measurement[0].timestamp;
+        let to = measurement[length - 1].timestamp;
+        let duration = (new Date(from) - new Date(to)) / 1000;
+            
+        let convertedMeasurement = {
+            from : from,
+            to : to,
+            duration : duration,
+            count : length,
+        }
+
+        if (!isNaN(minTemperature)){
+            convertedMeasurement.temperature = {
+                min : minTemperature,
+                max : maxTemperature,
+            }
+        }
+
+        if (!isNaN(minTemperatureGuard)){
+            convertedMeasurement.temperatureGuard = {
+                min : minTemperatureGuard,
+                max : maxTemperatureGuard,
+            }
+        }
+
+        if (!isNaN(minHumidity)){
+            convertedMeasurement.humidity = {
+                min : minHumidity,
+                max : maxHumidity
+            }
+        }
+
+        if (!isNaN(minFlowrate)){
+            convertedMeasurement.flowrate = {
+                min : minFlowrate,
+                max : maxFlowrate,
+            }
+        }
+         
+        if (!isNaN(minPressure)){
+            convertedMeasurement.pressure = {
+                min : minPressure,
+                max : maxPressure,
+            }
+        }
+
+        return convertedMeasurement;
+    }
+    
+    function convertWithdrawals(withdrawals) {
+
+        let totalWaterConsumption = 0;
+        let totalWaterCost = 0;
+        let totalEnerygCost = 0;
+        let maxFlowrate = Number.NaN;
+        let totalDuration = 0;
+        let minDuration = Number.NaN;
+        let maxDuration = Number.NaN;
+        
+        let length = withdrawals.length;
+        for (let i=0; i < length; i++) {
+            let item = withdrawals[i];
+
+            let duration = (new Date(item.stoptime) - new Date(item.starttime)) / 1000;
+            totalDuration += duration;
+            minDuration = getMin(duration, minDuration);
+            maxDuration = getMax(duration, maxDuration);
+        
+            totalWaterConsumption += item.waterconsumption;
+            totalWaterCost += item.water_cost;
+            totalEnerygCost += item.energy_cost;
+            let flowrate = item.maxflowrate;
+            maxFlowrate = getMax(flowrate, maxFlowrate);
+        }
+
+        let convertWithdrawals = {
+            from : withdrawals[0].starttime,
+            to : withdrawals[length - 1].stoptime,
+            count : length,
+            totalWaterConsumption : totalWaterConsumption,
+            totalWaterCost : totalWaterCost,
+            totalEnerygCost : totalEnerygCost,
+            totalDuration : totalDuration,
+        }
+
+        if (!isNaN(maxFlowrate)){
+            convertWithdrawals.maxFlowrate = maxFlowrate;
+        }
+
+        if (!isNaN(minDuration)){
+            convertWithdrawals.duration = {
+                min : minDuration,
+                max : maxDuration,
+            }
+        }
+
+        return convertWithdrawals;
+    }
+
+    // Calculates statistics for a measurement data object. 
+    function convertData(data) {
+        let statistics = {};
+
+        let measurement = data.measurement;
+        if (measurement) {
+            let length = measurement.length;
+            if (length > 0){
+                statistics.measurement = convertMeasurement(measurement);
+            }
+        }
+
+        let withdrawals = data.withdrawals;
+        if (withdrawals) {
+            let length = withdrawals.length;
+            if (length > 0){
+                statistics.withdrawals = convertWithdrawals(withdrawals);
+            }
+        }
+
+        return statistics;
+    }
+
+    // Converts notifications to a notification with text. 
+    function convertNotifications(notifications) {
+        let convertedNotifications = [];
+
+        for (let i=0; i < notifications.length; i++) {
+            let notification = notifications[i];
+            let convertedNotification = ondusApi.convertNotification(notification);
+            convertedNotifications.push(convertedNotification);
+        }
+
+        return convertedNotifications;
     }
 
     // --------------------------------------------------------------------------------------------
@@ -126,7 +334,7 @@ module.exports = function (RED) {
     // The sense node controls a grohe sense.
     function GroheSenseNode(config) {
         RED.nodes.createNode(this, config);
-        var node = this;
+        let node = this;
         node.location = config.location;
         node.roomName = config.room.trim();
 		node.applianceName = config.appliance.trim();
@@ -210,15 +418,16 @@ module.exports = function (RED) {
                             }
 
                             if(status != null){
-                                result.status = status;
+                                result.status = convertStatus(status);
                             }
                             
                             if(notifications != null){
-                                result.notifications = notifications;
+                                result.notifications = convertNotifications(notifications);
                             }
 
                             if(data != null){
                                 result.data = data.data;
+                                result.statistics = convertData(data.data);
                             }
 
                             if (info[0].type === ondusApi.OndusType.SenseGuard) {

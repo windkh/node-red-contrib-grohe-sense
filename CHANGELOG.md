@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.14.0] [2022-11-20]
+### added statistics for measurements and withdrawals - [#3](https://github.com/windkh/node-red-contrib-grohe-sense/issues/3) 
+### improved readability of notifications - [#4](https://github.com/windkh/node-red-contrib-grohe-sense/issues/4) 
+
 ## [0.13.0] [2022-11-20]
 ### fixed timestamp when getting appliance data - [#10](https://github.com/windkh/node-red-contrib-grohe-sense/issues/10) 
 
