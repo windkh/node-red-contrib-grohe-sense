@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.13.0] [2022-11-20]
+### fixed timestamp when getting appliance data - [#10](https://github.com/windkh/node-red-contrib-grohe-sense/issues/10) 
+
 ## [0.12.0] [2022-11-11]
 ### fixed - [#9](https://github.com/windkh/node-red-contrib-grohe-sense/issues/9) 
 

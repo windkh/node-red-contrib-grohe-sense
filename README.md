@@ -58,6 +58,9 @@ The node is able to get the status of a Grohe Sense, Grohe Plus or Grohe Guard n
 ## Sense
 To get the status simply send any msg.payload to the input.
 
+See the example flow [**sense**](examples/sense.json) in the examples folder.
+
+
 
 ## Sense Guard
 To get the status simply send any msg.payload to the input.
@@ -69,6 +72,9 @@ msg.payload = {
     }
 };
 ```
+
+See the example flow [**sense guard**](examples/senseguard.json) in the examples folder.
+
 
 
 ## Getting Historical Data
@@ -99,6 +105,16 @@ msg.payload = {
     }
 }
 ```
+
+See the example flow [**sense guard last values**](examples/senseguardvalues.json) in the examples folder.
+See the example flow [**sense guard history**](examples/senseguardhistory.json) in the examples folder.
+
+See the example flow [**sense last values**](examples/sensevalues.json) in the examples folder.
+See the example flow [**sense history**](examples/sensehistory.json) in the examples folder.
+
+
+
+
 
 
 # License

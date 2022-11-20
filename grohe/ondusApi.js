@@ -251,6 +251,12 @@ class OndusSession {
             });
     }
 
+    //// yyyy-MM-dd works, too but is not as precise
+    getDateTimeString(date) {
+        let iso = date.toISOString();
+        return iso;
+    }
+
     getDahsboard() {
         let url = apiUrl + '/dashboard';
         return this.get(url);
@@ -289,11 +295,11 @@ class OndusSession {
     getApplianceData(locationId, roomId, applianceId, fromDate, toDate) {
         let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/data';
         if (fromDate) {
-            const fromStr = fromDate.toISOString().split('T')[0];
+            const fromStr = this.getDateTimeString(fromDate);
             url += `?from=${fromStr}`;
         }
         if (toDate) {
-            const toStr = toDate.toISOString().split('T')[0];
+            const toStr = this.getDateTimeString(toDate);
             url += `&to=${toStr}`;
         }
 
