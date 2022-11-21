@@ -106,11 +106,11 @@ msg.payload = {
 }
 ```
 
-See the example flow [**sense guard last values**](examples/senseguardvalues.json) in the examples folder.
-See the example flow [**sense guard history**](examples/senseguardhistory.json) in the examples folder.
-
-See the example flow [**sense last values**](examples/sensevalues.json) in the examples folder.
-See the example flow [**sense history**](examples/sensehistory.json) in the examples folder.
+See the example flow [**sense guard last values**](examples/senseguardvalues.json) in the examples folder.  
+See the example flow [**sense guard history**](examples/senseguardhistory.json) in the examples folder.  
+  
+See the example flow [**sense last values**](examples/sensevalues.json) in the examples folder.  
+See the example flow [**sense history**](examples/sensehistory.json) in the examples folder.  
 
 
 
