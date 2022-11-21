@@ -139,16 +139,27 @@ module.exports = function (RED) {
         let totalWaterConsumption = 0;
         let totalWaterCost = 0;
         let totalEnerygCost = 0;
-        let maxFlowrate = Number.NaN;
+        let totalMaxFlowrate = Number.NaN;
         let totalDuration = 0;
         let minDuration = Number.NaN;
         let maxDuration = Number.NaN;
         
+        let todayWaterConsumption = 0;
+        let todayWaterCost = 0;
+        let todayEnerygCost = 0;
+        let todayMaxFlowrate = Number.NaN;
+        let todayDuration = 0;
+
         let length = withdrawals.length;
+        let latestStopTime = withdrawals[length - 1].stoptime;
+        let today = new Date(new Date(latestStopTime).toDateString());
+
         for (let i=0; i < length; i++) {
             let item = withdrawals[i];
 
-            let duration = (new Date(item.stoptime) - new Date(item.starttime)) / 1000;
+            let stopDate = new Date(item.stoptime);
+            let startDate = new Date(item.starttime);
+            let duration = (stopDate- startDate) / 1000;
             totalDuration += duration;
             minDuration = getMin(duration, minDuration);
             maxDuration = getMax(duration, maxDuration);
@@ -157,7 +168,15 @@ module.exports = function (RED) {
             totalWaterCost += item.water_cost;
             totalEnerygCost += item.energy_cost;
             let flowrate = item.maxflowrate;
-            maxFlowrate = getMax(flowrate, maxFlowrate);
+            totalMaxFlowrate = getMax(flowrate, totalMaxFlowrate);
+
+            if(stopDate > today) {
+                todayWaterConsumption += item.waterconsumption;
+                todayWaterCost += item.water_cost;
+                todayEnerygCost += item.energy_cost;
+                todayMaxFlowrate = getMax(flowrate, todayMaxFlowrate);
+                todayDuration += duration;
+            }
         }
 
         let convertWithdrawals = {
@@ -168,10 +187,18 @@ module.exports = function (RED) {
             totalWaterCost : totalWaterCost,
             totalEnerygCost : totalEnerygCost,
             totalDuration : totalDuration,
+            todayWaterConsumption : todayWaterConsumption,
+            todayWaterCost : todayWaterCost,
+            todayEnerygCost : todayEnerygCost,
+            todayDuration : todayDuration,
         }
 
-        if (!isNaN(maxFlowrate)){
-            convertWithdrawals.maxFlowrate = maxFlowrate;
+        if (!isNaN(totalMaxFlowrate)){
+            convertWithdrawals.totalMaxFlowrate = totalMaxFlowrate;
+        }
+
+        if (!isNaN(todayMaxFlowrate)){
+            convertWithdrawals.todayMaxFlowrate = todayMaxFlowrate;
         }
 
         if (!isNaN(minDuration)){
