@@ -438,6 +438,20 @@ module.exports = function (RED) {
                                 }
                             }
 
+                            // For Debugging only
+                            if (msg.debug === true){
+                                let  debugMsg = {
+                                    debug : {
+                                        applianceIds : node.applianceIds,
+                                        info : info,
+                                        status : status,
+                                        notifications : notifications,
+                                        applianceData : data
+                                    }
+                                };
+                                node.warn(debugMsg);
+                            }
+
                             let result = {};
 
                             if(info != null){

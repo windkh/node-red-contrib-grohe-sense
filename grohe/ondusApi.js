@@ -420,13 +420,34 @@ function convertNotification(notification) {
                     431 : 'Water detected - water still ON',
                 },
             },
+            // new unknown category, maybe info
+            40 : {
+                'text' : 'Info',
+                'type' : {
+                    1   : 'Did you have a leak?',
+                },
+            },
         },
     };
 
     let category = notification.category;
     let type = notification.type;
-    let message = notificationMessageByCategoryAndType.category[category].type[type];
-    let categoryText = notificationMessageByCategoryAndType.category[category].text;
+
+    let categoryInfo = notificationMessageByCategoryAndType.category[category];
+
+    let message;
+    let categoryText;
+    if (categoryInfo !== undefined) {
+        message = categoryInfo.type[type];
+        categoryText = categoryInfo.text;    
+    }
+    else {
+        categoryText = 'Unknown';
+    }
+
+    if (message === undefined) {
+        message = 'Unkown notification category: ' + category + ' type: ' + type;
+    }
 
     let convertedNotification = {
         category : categoryText,
@@ -442,7 +463,7 @@ let OndusType = {
     Sense : 101,
     SensePlus : 102,
     SenseGuard : 103,
-    // BlueHome : 104 // TDOD
+    // BlueHome : 104 // TODO
 };
 
 
