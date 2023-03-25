@@ -345,9 +345,14 @@ function convertNotification(notification) {
     // credits: https://github.com/FlorianSW/grohe-ondus-api-java/blob/master/src/main/java/io/github/floriansw/ondus/api/model/Notification.java
     let notificationMessageByCategoryAndType = {
         'category' : {
-            // NOTIFICATION_CATEGORY_FIRMWARE
+            0 : {
+                'text' : 'Advertising',
+                'type' : {
+                    0   : 'Unknown',
+                },
+            },
             10 : {
-                'text' : 'Firmware',
+                'text' : 'Information',
                 'type'  : {
                     10  : 'Installation successful',
                     60  : 'Firmware update available',
@@ -368,7 +373,6 @@ function convertNotification(notification) {
                     606 : 'Device deactivated',
                 },  
             },
-            // NOTIFICATION_CATEGORY_WARNING
             20 : {
                 'text' : 'Warning',
                 'type' : {
@@ -400,10 +404,9 @@ function convertNotification(notification) {
                     604 : 'GROHE Sense Guard did not respond – valve closed',
                 },
             },
-            // NOTIFICATION_CATEGORY_CRITICAL
             /* Notifications in this category will always trigger leakServices */
             30 : {
-                'text' : 'Critical',
+                'text' : 'Alarm',
                 'type' : {
                     0   : 'Flooding detected - water has been SHUT OFF',
                     50  : 'Sensor error 50',
@@ -423,9 +426,8 @@ function convertNotification(notification) {
                     431 : 'Water detected by GROHE Sense',
                 },
             },
-            // category, maybe info, questionaire, special
             40 : {
-                'text' : 'Info',
+                'text' : 'WebUrl',
                 'type' : {
                     1   : 'Web URL',
                 },
