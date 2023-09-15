@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-grohe-sense",
-    "version": "0.15.1",
+    "version": "0.16.0",
     "description": "Grohe sense nodes via ondus API.",
     "node-red": {
 	    "version": ">=0.1.0",

@@ -293,7 +293,7 @@ class OndusSession {
     }
 
     getApplianceData(locationId, roomId, applianceId, fromDate, toDate) {
-        let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/data';
+        let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/data/aggregated';
         if (fromDate) {
             const fromStr = this.getDateTimeString(fromDate);
             url += `?from=${fromStr}`;
