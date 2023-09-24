@@ -87,7 +87,8 @@ start.setDate(end.getDate() - 2); // last 2 days.
 msg.payload = {  
     data : {
         from : start,
-		to : end
+		to : end,
+		groupBy : 'hour' // or 'day', 'week', ...
     }
 };
 ```
@@ -101,7 +102,8 @@ let start = now - 24 * 60 * 60000;
 msg.payload = {
     data : {
         from : start,
-        to : end
+        to : end,
+		groupBy : 'hour' // or 'day', 'week', ...
     }
 }
 ```

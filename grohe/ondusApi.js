@@ -292,17 +292,23 @@ class OndusSession {
         return this.get(url);
     }
 
-    getApplianceData(locationId, roomId, applianceId, fromDate, toDate) {
+    getApplianceData(locationId, roomId, applianceId, fromDate, toDate, groupBy) {
         let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/data/aggregated';
+
         if (fromDate) {
             const fromStr = this.getDateTimeString(fromDate);
             url += `?from=${fromStr}`;
         }
+        
         if (toDate) {
             const toStr = this.getDateTimeString(toDate);
             url += `&to=${toStr}`;
         }
 
+        if (groupBy) {
+            url += `&groupBy=${groupBy}`;
+        }
+    
         return this.get(url);
     }
 

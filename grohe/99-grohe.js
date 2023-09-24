@@ -85,8 +85,8 @@ module.exports = function (RED) {
             maxPressure = getMax(pressure, maxPressure);
         }
 
-        let from = measurement[0].timestamp;
-        let to = measurement[length - 1].timestamp;
+        let from = measurement[0].date;
+        let to = measurement[length - 1].date;
         let duration = (new Date(from) - new Date(to)) / 1000;
             
         let convertedMeasurement = {
@@ -139,58 +139,51 @@ module.exports = function (RED) {
         let totalWaterConsumption = 0;
         let totalWaterCost = 0;
         let totalEnerygCost = 0;
+        let totalHotwaterShare = 0;
         let totalMaxFlowrate = Number.NaN;
-        let totalDuration = 0;
-        let minDuration = Number.NaN;
-        let maxDuration = Number.NaN;
         
         let todayWaterConsumption = 0;
         let todayWaterCost = 0;
         let todayEnerygCost = 0;
+        let todayHotwaterShare = 0;
         let todayMaxFlowrate = Number.NaN;
-        let todayDuration = 0;
-
+        
         let length = withdrawals.length;
-        let latestStopTime = withdrawals[length - 1].stoptime;
-        let today = new Date(new Date(latestStopTime).toDateString());
+        let latestDate = withdrawals[length - 1].date;
+        let today = new Date(new Date(latestDate).toDateString());
 
         for (let i=0; i < length; i++) {
             let item = withdrawals[i];
 
-            let stopDate = new Date(item.stoptime);
-            let startDate = new Date(item.starttime);
-            let duration = (stopDate- startDate) / 1000;
-            totalDuration += duration;
-            minDuration = getMin(duration, minDuration);
-            maxDuration = getMax(duration, maxDuration);
-        
+            let date = new Date(item.date);
             totalWaterConsumption += item.waterconsumption;
             totalWaterCost += item.water_cost;
             totalEnerygCost += item.energy_cost;
+            totalHotwaterShare += item.hotwater_share;
             let flowrate = item.maxflowrate;
             totalMaxFlowrate = getMax(flowrate, totalMaxFlowrate);
 
-            if(stopDate > today) {
+            if(date > today) {
                 todayWaterConsumption += item.waterconsumption;
                 todayWaterCost += item.water_cost;
                 todayEnerygCost += item.energy_cost;
+                todayHotwaterShare += item.hotwater_share;
                 todayMaxFlowrate = getMax(flowrate, todayMaxFlowrate);
-                todayDuration += duration;
             }
         }
 
         let convertWithdrawals = {
-            from : withdrawals[0].starttime,
-            to : withdrawals[length - 1].stoptime,
+            from : withdrawals[0].date,
+            to : withdrawals[length - 1].date,
             count : length,
             totalWaterConsumption : totalWaterConsumption,
             totalWaterCost : totalWaterCost,
             totalEnerygCost : totalEnerygCost,
-            totalDuration : totalDuration,
+            totalHotwaterShare : totalHotwaterShare,
             todayWaterConsumption : todayWaterConsumption,
             todayWaterCost : todayWaterCost,
             todayEnerygCost : todayEnerygCost,
-            todayDuration : todayDuration,
+            todayHotwaterShare : todayHotwaterShare 
         }
 
         if (!isNaN(totalMaxFlowrate)){
@@ -199,13 +192,6 @@ module.exports = function (RED) {
 
         if (!isNaN(todayMaxFlowrate)){
             convertWithdrawals.todayMaxFlowrate = todayMaxFlowrate;
-        }
-
-        if (!isNaN(minDuration)){
-            convertWithdrawals.duration = {
-                min : minDuration,
-                max : maxDuration,
-            }
         }
 
         return convertWithdrawals;
@@ -421,14 +407,15 @@ module.exports = function (RED) {
                             if(msg.payload !== undefined && msg.payload.data !== undefined ){
                                 let fromDate = convertToDate(msg.payload.data.from);
                                 let toDate = convertToDate(msg.payload.data.to);
-
+                                let groupBy = msg.payload.data.groupBy;
                                 try {
                                     let responseData = await node.config.session.getApplianceData(
                                         node.applianceIds.locationId,
                                         node.applianceIds.roomId,
                                         node.applianceIds.applianceId,
                                         fromDate,
-                                        toDate);
+                                        toDate,
+                                        groupBy);
                                     data = JSON.parse(responseData.text);
                                 }
                                 catch(exception){

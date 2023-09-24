@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.17.0] [2023-09-24]
+### fixed examples and added groupBy option - [#12](https://github.com/windkh/node-red-contrib-grohe-sense/issues/13) 
+
 ## [0.16.0] [2023-09-15]
 ### breaking change in API: data is now data/aggregated - [#12](https://github.com/windkh/node-red-contrib-grohe-sense/issues/12) 
 
