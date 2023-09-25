@@ -149,26 +149,28 @@ module.exports = function (RED) {
         let todayMaxFlowrate = Number.NaN;
         
         let length = withdrawals.length;
-        let latestDate = withdrawals[length - 1].date;
-        let today = new Date(new Date(latestDate).toDateString());
-
-        for (let i=0; i < length; i++) {
-            let item = withdrawals[i];
-
-            let date = new Date(item.date);
-            totalWaterConsumption += item.waterconsumption;
-            totalWaterCost += item.water_cost;
-            totalEnerygCost += item.energy_cost;
-            totalHotwaterShare += item.hotwater_share;
-            let flowrate = item.maxflowrate;
-            totalMaxFlowrate = getMax(flowrate, totalMaxFlowrate);
-
-            if(date > today) {
-                todayWaterConsumption += item.waterconsumption;
-                todayWaterCost += item.water_cost;
-                todayEnerygCost += item.energy_cost;
-                todayHotwaterShare += item.hotwater_share;
-                todayMaxFlowrate = getMax(flowrate, todayMaxFlowrate);
+        if(length > 0) {
+            let todayDate = withdrawals[0].date;
+            let today = new Date(new Date(todayDate).toDateString());
+    
+            for (let i=0; i < length; i++) {
+                let item = withdrawals[i];
+    
+                let date = new Date(item.date);
+                totalWaterConsumption += item.waterconsumption;
+                totalWaterCost += item.water_cost;
+                totalEnerygCost += item.energy_cost;
+                totalHotwaterShare += item.hotwater_share;
+                let flowrate = item.maxflowrate;
+                totalMaxFlowrate = getMax(flowrate, totalMaxFlowrate);
+    
+                if(date >= today) {
+                    todayWaterConsumption += item.waterconsumption;
+                    todayWaterCost += item.water_cost;
+                    todayEnerygCost += item.energy_cost;
+                    todayHotwaterShare += item.hotwater_share;
+                    todayMaxFlowrate = getMax(flowrate, todayMaxFlowrate);
+                }
             }
         }
 
