@@ -312,6 +312,11 @@ class OndusSession {
         return this.get(url);
     }
 
+    getApplianceDetails(locationId, roomId, applianceId) {
+        let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/details';
+        return this.get(url);
+    }
+
     getApplianceStatus(locationId, roomId, applianceId) {
         let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/status';
         return this.get(url);

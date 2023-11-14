@@ -264,24 +264,35 @@ module.exports = function (RED) {
 
                     for (let i = 0; i < locations.length; i++) {
                         let location = locations[i];
+                            
                         if (location.name === node.locationName){
                             node.location = location;
+                            node.log('location ' + location.name);
                         
                             node.rooms = location.rooms;
                         
                             for (let j = 0; j < node.rooms.length; j++) {
-                                let room = node.rooms [j];
-
+                                let room = node.rooms[j];
+                                node.log('    room ' + room.name);
+                        
                                 let appliances = room.appliances;
                                 node.appliancesByRoomName[room.name] = {
                                     room : room,
                                     appliances : appliances,
                                 };
+
+                                for (let k = 0; k < appliances.length; k++) {
+                                    let appliance = appliances[k];
+                                    node.log('        appliance ' + appliance.name);
+                                }
                             }
 
                             node.connected = true;
                             node.emit('initialized');
                             break;
+                        }
+                        else {
+                            // not used.
                         }
                     }
 
@@ -399,6 +410,12 @@ module.exports = function (RED) {
                                 node.applianceIds.applianceId);
                             let status = JSON.parse(responseStatus.text);
                             
+                            let responseDetails = await node.config.session.getApplianceDetails(
+                                node.applianceIds.locationId,
+                                node.applianceIds.roomId,
+                                node.applianceIds.applianceId);
+                            let details = JSON.parse(responseDetails.text);
+
                             let responseNotifications = await node.config.session.getApplianceNotifications(
                                 node.applianceIds.locationId,
                                 node.applianceIds.roomId,
@@ -434,6 +451,7 @@ module.exports = function (RED) {
                                         applianceIds : node.applianceIds,
                                         info : info,
                                         status : status,
+                                        details : details,
                                         notifications : notifications,
                                         applianceData : data
                                     }
@@ -451,6 +469,10 @@ module.exports = function (RED) {
                                 result.status = convertStatus(status);
                             }
                             
+                            if(details != null){
+                                result.details = details;
+                            }
+
                             if(notifications != null){
                                 result.notifications = convertNotifications(notifications);
                             }
