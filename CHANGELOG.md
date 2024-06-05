@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.20.0] [2024-06-05]
+### adapted to changes in ondus API
+- timestamp is now date
+- maxFlowrate was removed
+- withdrawals are not available in the format starttime/endtime but only per time period
+
 ## [0.19.0] [2023-11-14]
 ### added details - [#16](https://github.com/windkh/node-red-contrib-grohe-sense/issues/16) 
 
