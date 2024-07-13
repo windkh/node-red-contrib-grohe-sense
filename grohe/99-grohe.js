@@ -295,7 +295,6 @@ module.exports = function (RED) {
                             // not used.
                         }
                     }
-
                 }
                 catch (exception){
                     node.connected = false;
