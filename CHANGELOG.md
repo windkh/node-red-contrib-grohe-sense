@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.20.1] [2024-07-13]
+### refresh token does not crash when internet is temporarily unavailable - [#18](https://github.com/windkh/node-red-contrib-grohe-sense/issues/18) 
+
 ## [0.20.0] [2024-06-05]
 ### adapted to changes in ondus API
 - timestamp is now date
