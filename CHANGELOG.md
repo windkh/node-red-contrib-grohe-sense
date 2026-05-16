@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.24.0] [2026-05-16]
+### added mocha unit tests for converters, ondusApi notification mapping, and entry-point registration
+
 ## [0.23.0] [2026-05-16]
 ### documented inputs / outputs of the sense node in 99-grohe.html and README; documented project layout
 
