@@ -10,6 +10,6 @@ module.exports = function (RED) {
     const pkg = require('./../package.json');
     RED.log.info('node-red-contrib-grohe-sense version: v' + pkg.version);
 
-    require('../nodes/grohe-location-node.js')(RED);
-    require('../nodes/grohe-sense-node.js')(RED);
+    require('./nodes/grohe-location-node.js')(RED);
+    require('./nodes/grohe-sense-node.js')(RED);
 };

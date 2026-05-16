@@ -57,13 +57,13 @@ grohe/
   99-grohe.html        Editor UI and inline help for both nodes
   99-grohe.js          Node-RED entry point (just wires the two nodes up)
   icons/
-lib/
-  ondusApi.js          Low-level Ondus REST client and notification helpers
-  converters.js        Pure helpers: status / measurement / withdrawal conversion
-nodes/
-  grohe-location-node.js   Configuration node (login + dashboard cache)
-  grohe-sense-node.js      The grohe sense / plus / guard node
-test/                  Unit tests (mocha + chai)
+  lib/
+    ondusApi.js        Low-level Ondus REST client and notification helpers
+    converters.js      Pure helpers: status / measurement / withdrawal conversion
+  nodes/
+    grohe-location-node.js   Configuration node (login + dashboard cache)
+    grohe-sense-node.js      The grohe sense / plus / guard node
+test/                  Unit tests (mocha)
 examples/              Sample flows
 ```
 

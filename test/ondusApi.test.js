@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const ondusApi = require('../lib/ondusApi');
+const ondusApi = require('../grohe/lib/ondusApi');
 
 describe('lib/ondusApi', function () {
 

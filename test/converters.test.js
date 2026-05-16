@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const converters = require('../lib/converters');
+const converters = require('../grohe/lib/converters');
 
 describe('lib/converters', function () {
 

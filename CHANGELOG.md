@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.27.0] [2026-05-16]
+### moved lib/ and nodes/ folders under grohe/ to keep the node-red package self-contained
+
 ## [0.26.0] [2026-05-16]
 ### added ESLint configuration and `npm run lint` script; CI now runs lint before tests; minor cleanups in lib/ondusApi.js (removed dead url require / unused locals, tightened == to ===)
 
