@@ -1,2 +1,10 @@
 # Dependency directories
 node_modules/
+
+# Editor / IDE
+.claude/
+.vscode/
+
+# Test / coverage output
+coverage/
+.nyc_output/

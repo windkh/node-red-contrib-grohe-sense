@@ -8,7 +8,7 @@ module.exports = function (RED) {
     const pkg = require('./../package.json');
     RED.log.info('node-red-contrib-grohe-sense version: v' + pkg.version);
 
-    let ondusApi = require('./ondusApi.js');
+    let ondusApi = require('../lib/ondusApi.js');
     	
     // check if the input is already a date, if not it is probably a value in milliseconds. 
     function convertToDate(input) {
