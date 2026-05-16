@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.25.0] [2026-05-16]
+### added GitHub Actions CI workflow that runs the test suite on every push / PR against main (node 18/20/22); existing publish workflow now runs tests too
+
 ## [0.24.0] [2026-05-16]
 ### added mocha unit tests for converters, ondusApi notification mapping, and entry-point registration
 
