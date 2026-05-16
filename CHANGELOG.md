@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.22.0] [2026-05-16]
+### refactored 99-grohe.js: GroheLocationNode and GroheSenseNode moved into nodes/ folder; conversion helpers moved into lib/converters.js
+
 ## [0.21.0] [2026-05-16]
 ### moved ondusApi.js into the dedicated lib/ folder
 
