@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.23.0] [2026-05-16]
+### documented inputs / outputs of the sense node in 99-grohe.html and README; documented project layout
+
 ## [0.22.0] [2026-05-16]
 ### refactored 99-grohe.js: GroheLocationNode and GroheSenseNode moved into nodes/ folder; conversion helpers moved into lib/converters.js
 

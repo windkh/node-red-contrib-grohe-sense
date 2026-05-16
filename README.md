@@ -51,22 +51,80 @@ If you want to support this free project. Any help is welcome. You can donate by
 Changes can be followed [here](/CHANGELOG.md)
 
 
-# Grohe Sense Node
-The node is able to get the status of a Grohe Sense, Grohe Plus or Grohe Guard node.
+# Project layout
+```
+grohe/
+  99-grohe.html        Editor UI and inline help for both nodes
+  99-grohe.js          Node-RED entry point (just wires the two nodes up)
+  icons/
+lib/
+  ondusApi.js          Low-level Ondus REST client and notification helpers
+  converters.js        Pure helpers: status / measurement / withdrawal conversion
+nodes/
+  grohe-location-node.js   Configuration node (login + dashboard cache)
+  grohe-sense-node.js      The grohe sense / plus / guard node
+test/                  Unit tests (mocha + chai)
+examples/              Sample flows
+```
 
 
-## Sense
-To get the status simply send any msg.payload to the input.
+# Nodes
+
+## `grohe location` (configuration node)
+Holds the Ondus credentials and identifies the location to operate on.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| Location | string | Name of the location as it appears in the Grohe Ondus app. |
+| Username | string | Email of the Grohe Ondus account. |
+| Password | string | Password of the Grohe Ondus account (stored encrypted by Node-RED). |
+
+On startup the node logs in, retrieves the dashboard, and caches the rooms and appliances of the configured location. The access token is automatically refreshed every 30 minutes; short internet outages are tolerated.
+
+
+## `grohe sense`
+The node is able to get the status of a Grohe Sense, Grohe Sense Plus or Grohe Sense Guard appliance. It is also used to send commands to a Sense Guard.
+
+### Inputs
+Any incoming message triggers a poll. The optional fields on `msg.payload` control what happens:
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `payload.command` | object | no | Only honoured for Sense Guard (type `103`). Sent verbatim to the Ondus API. Example: `{ command: { valve_open: true } }`. |
+| `payload.data.from` | Date \| number | no | Start of the historical range (Date object or milliseconds). |
+| `payload.data.to` | Date \| number | no | End of the historical range. |
+| `payload.data.groupBy` | string | no | Aggregation granularity: `hour`, `day`, or `week`. |
+| `msg.debug` | boolean | no | If `true`, the raw API responses are emitted as a debug warning. |
+
+### Outputs
+`msg.payload` is replaced with an object containing the following fields:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `info` | object | Static appliance information (serial, type, firmware, configuration). |
+| `status` | object | Current status flattened as `{ type: value }` (battery, wifi quality, connection state, ...). |
+| `details` | object | Detailed configuration of the appliance. |
+| `notifications` | array | Active notifications, each annotated with a human-readable `category` and `message`. |
+| `command` | object | Only for Sense Guard: the current command state (e.g. `valve_open`). |
+| `data` | object | Raw aggregated historical data — only when `payload.data` was specified. |
+| `statistics` | object | Pre-computed min/max temperature, humidity, pressure, flow rate, and today/total water consumption derived from `data`. |
+
+### Status indicator
+The node icon reflects the runtime state: *initializing*, *connected*, *updating*, *ok*, *N notifications*, or *failed*.
+
+
+## Examples
+
+### Sense
+To get the status simply send any `msg.payload` to the input.
 
 See the example flow [**sense**](examples/sense.json) in the examples folder.
 
 
-
-## Sense Guard
-To get the status simply send any msg.payload to the input.
-To send a command to open the valve you need to send the following message:
-```
-msg.payload = {  
+### Sense Guard
+To open the valve send:
+```js
+msg.payload = {
     command : {
         valve_open: true,
     }
@@ -76,43 +134,48 @@ msg.payload = {
 See the example flow [**sense guard**](examples/senseguard.json) in the examples folder.
 
 
-
-## Getting Historical Data
-To read out the internal measurement history you need to specify the start and end data as follows:
-```
+### Getting Historical Data
+To read out the internal measurement history you need to specify the start and end date as follows:
+```js
 let end = new Date();
 let start = new Date();
 start.setDate(end.getDate() - 2); // last 2 days.
-
-msg.payload = {  
-    data : {
-        from : start,
-		to : end,
-		groupBy : 'hour' // or 'day', 'week', ...
-    }
-};
-```
-Date can be passed in milliseconds format, too: e.g. Date.now
-
-```
-let now = Date.now();
-let end = now;
-let start = now - 24 * 60 * 60000;
 
 msg.payload = {
     data : {
         from : start,
         to : end,
-		groupBy : 'hour' // or 'day', 'week', ...
+        groupBy : 'hour' // or 'day', 'week', ...
     }
-}
+};
+```
+Dates can be passed in milliseconds format, too:
+```js
+let now = Date.now();
+msg.payload = {
+    data : {
+        from : now - 24 * 60 * 60000,
+        to : now,
+        groupBy : 'hour'
+    }
+};
 ```
 
 See the example flow [**sense guard last values**](examples/senseguardvalues.json) in the examples folder.  
 See the example flow [**sense guard history**](examples/senseguardhistory.json) in the examples folder.  
   
 See the example flow [**sense last values**](examples/sensevalues.json) in the examples folder.  
-See the example flow [**sense history**](examples/sensehistory.json) in the examples folder.  
+See the example flow [**sense history**](examples/sensehistory.json) in the examples folder.
+
+
+# Development
+
+```sh
+npm install        # install dev dependencies
+npm test           # run unit tests
+npm run lint       # run eslint
+```
+Tests run automatically on every push and pull request via GitHub Actions (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 
 

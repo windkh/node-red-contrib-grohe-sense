@@ -23,7 +23,7 @@
             <label for="node-config-input-location"><i class="fa fa-home"></i> Location</label>
             <input type="text" id="node-config-input-location" placeholder="(Name of the location to connect to)">
         </div>
-       
+
         <hr align="middle"/>
 
         <div class="form-row">
@@ -34,17 +34,27 @@
 			<label for="node-config-input-password"><i class="fa fa-key"></i> Password</label>
 			<input type="text" id="node-config-input-password" placeholder="Enter the password here)">
 		</div>
-	
+
         <hr align="middle"/>
     </div>
 </script>
 
 <script type="text/x-red" data-help-name="grohe location">
-    <p>A configuration node that defines the location.</p>
+    <p>Configuration node that authenticates against the Grohe Ondus API and tracks one location (with its rooms and appliances).</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Location <span class="property-type">string</span></dt>
+        <dd>Name of the Grohe location to connect to (as it appears in the Grohe Ondus app).</dd>
+        <dt>Username <span class="property-type">string</span></dt>
+        <dd>Email address of your Grohe Ondus account.</dd>
+        <dt>Password <span class="property-type">string</span></dt>
+        <dd>Password of your Grohe Ondus account. Stored encrypted by Node-RED.</dd>
+    </dl>
 
     <h3>Details</h3>
-    <p>It communicates with the grohe API server.</p>
- </script>
+    <p>On startup the node logs in to <code>idp2-apigw.cloud.grohe.com</code>, retrieves the dashboard, and caches the rooms and appliances of the configured location. The access token is automatically refreshed every 30 minutes. If the network is temporarily unavailable, the refresh is retried and the node recovers automatically (as long as the outage is shorter than the refresh-token lifetime of ~1 hour).</p>
+</script>
 
 
 <!-- ------------------------------------------------------------------------------------------ -->
@@ -102,25 +112,63 @@
     <div class="form-row">
         <label for="node-input-description"><i class="fa fa-comment"></i> Description</label>
         <input type="text" id="node-input-description" placeholder="The description of the device (optional)">
-    </div>  
+    </div>
 </script>
 
 <script type="text/x-red" data-help-name="grohe sense">
-    <p>A node that controls a grohe sense device.</p>
+    <p>Reads the current state of a Grohe Sense, Grohe Sense Plus, or Grohe Sense Guard appliance, and optionally sends commands to a Sense Guard.</p>
 
     <h3>Configuration</h3>
-    
-	<p>Room where the device is located.</p>
-    <p>Name of the device.</p>
-    <p>Description of the device.</p>
-    
+    <dl class="message-properties">
+        <dt>Location <span class="property-type">grohe location</span></dt>
+        <dd>The configuration node that holds the credentials and identifies the location.</dd>
+        <dt>Room <span class="property-type">string</span></dt>
+        <dd>Name of the room the appliance lives in (as shown in the Grohe Ondus app).</dd>
+        <dt>Name <span class="property-type">string</span></dt>
+        <dd>Name of the appliance.</dd>
+        <dt>Type <span class="property-type">number</span></dt>
+        <dd>Device type: <code>101</code> = Sense, <code>102</code> = Sense Plus, <code>103</code> = Sense Guard.</dd>
+        <dt>Description <span class="property-type">string</span></dt>
+        <dd>Optional label shown in the editor.</dd>
+    </dl>
+
     <h3>Inputs</h3>
-    <p>.</p>
-    
+    <p>Any incoming message triggers an update. The contents of <code>msg.payload</code> select optional behaviour:</p>
+    <dl class="message-properties">
+        <dt class="optional">payload.command <span class="property-type">object</span></dt>
+        <dd>Only for Sense Guard (type 103). Sent verbatim to the Grohe API. Example: <code>{ command: { valve_open: true } }</code> to open the valve, <code>false</code> to close it.</dd>
+        <dt class="optional">payload.data.from <span class="property-type">Date | number</span></dt>
+        <dd>Start of the historical range (ISO date or milliseconds).</dd>
+        <dt class="optional">payload.data.to <span class="property-type">Date | number</span></dt>
+        <dd>End of the historical range.</dd>
+        <dt class="optional">payload.data.groupBy <span class="property-type">string</span></dt>
+        <dd>Aggregation granularity: <code>hour</code>, <code>day</code>, or <code>week</code>.</dd>
+        <dt class="optional">debug <span class="property-type">boolean</span></dt>
+        <dd>If <code>true</code>, the node emits a debug message with the raw API responses.</dd>
+    </dl>
 
     <h3>Outputs</h3>
-    <p>.</p>
-    <p><code>msg.payload</code></p>
+    <p>The result is placed on <code>msg.payload</code> and contains:</p>
+    <dl class="message-properties">
+        <dt>info <span class="property-type">object</span></dt>
+        <dd>Static appliance information (serial, type, firmware version, configuration).</dd>
+        <dt>status <span class="property-type">object</span></dt>
+        <dd>Current status flattened as <code>{ type: value }</code> (battery, wifi quality, connection state, ...).</dd>
+        <dt>details <span class="property-type">object</span></dt>
+        <dd>Detailed configuration of the appliance.</dd>
+        <dt>notifications <span class="property-type">array</span></dt>
+        <dd>Active notifications. Each entry includes the original API payload plus a human-readable <code>category</code> and <code>message</code>.</dd>
+        <dt class="optional">command <span class="property-type">object</span></dt>
+        <dd>Only for Sense Guard: the current command state (e.g. <code>valve_open</code>).</dd>
+        <dt class="optional">data <span class="property-type">object</span></dt>
+        <dd>Raw aggregated historical data (only when <code>payload.data</code> was specified on the input).</dd>
+        <dt class="optional">statistics <span class="property-type">object</span></dt>
+        <dd>Pre-computed min/max temperature, humidity, pressure, flow rate, and today/total water consumption derived from <code>data</code>.</dd>
+    </dl>
+
+    <h3>Status</h3>
+    <p>The node icon reflects the runtime state: <em>initializing</em>, <em>connected</em>, <em>updating</em>, <em>ok</em>, <em>N notifications</em>, or <em>failed</em>.</p>
+
+    <h3>Examples</h3>
+    <p>See the flows in the <code>examples/</code> folder of this package for ready-to-import sample flows.</p>
 </script>
-
-
