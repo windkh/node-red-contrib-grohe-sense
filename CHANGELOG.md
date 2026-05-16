@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.26.0] [2026-05-16]
+### added ESLint configuration and `npm run lint` script; CI now runs lint before tests; minor cleanups in lib/ondusApi.js (removed dead url require / unused locals, tightened == to ===)
+
 ## [0.25.0] [2026-05-16]
 ### added GitHub Actions CI workflow that runs the test suite on every push / PR against main (node 18/20/22); existing publish workflow now runs tests too
 

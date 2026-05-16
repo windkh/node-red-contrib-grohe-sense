@@ -1,0 +1,29 @@
+{
+    "root": true,
+    "env": {
+        "node": true,
+        "es2021": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 2021,
+        "sourceType": "script"
+    },
+    "rules": {
+        "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+        "no-var": "warn",
+        "prefer-const": "off",
+        "eqeqeq": ["warn", "smart"],
+        "no-trailing-spaces": "warn",
+        "semi": ["warn", "always"],
+        "no-multiple-empty-lines": ["warn", { "max": 2, "maxEOF": 1 }]
+    },
+    "overrides": [
+        {
+            "files": ["test/**/*.js"],
+            "env": {
+                "node": true,
+                "mocha": true
+            }
+        }
+    ]
+}
