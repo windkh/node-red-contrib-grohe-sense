@@ -27,9 +27,16 @@ module.exports = function (RED) {
 
             node.onInitialized = function () {
 
-                node.applianceIds = node.config.getApplianceIds(node.roomName, node.applianceName);
+                let lookup = node.config.findAppliance(node.roomName, node.applianceName);
+                node.applianceIds = lookup.ids;
                 if (node.applianceIds !== undefined) {
                     node.status({ fill: 'green', shape: 'ring', text: 'connected' });
+
+                    // A stale / not fully registered appliance resolves but its
+                    // commands typically time out - warn so the cause is obvious. (#25)
+                    if (lookup.registrationComplete === false) {
+                        node.warn('Grohe appliance "' + node.applianceName + '" is not fully registered in the Grohe app - commands (e.g. open / close valve) may time out.');
+                    }
 
                     node.on('input', async function (msg) {
 
@@ -188,7 +195,19 @@ module.exports = function (RED) {
                     });
                 }
                 else {
-                    node.status({ fill: 'red', shape: 'ring', text: node.applianceName + ' not found ' });
+                    // Tell the user what is actually available instead of leaving
+                    // them to guess at a name mismatch. (#25)
+                    let hint;
+                    if (lookup.error === 'roomNotFound') {
+                        hint = 'room "' + node.roomName + '" not found. Available rooms: ' +
+                            (lookup.availableRooms.join(', ') || '(none)');
+                    }
+                    else {
+                        hint = 'appliance "' + node.applianceName + '" not found in room "' + node.roomName +
+                            '". Available appliances: ' + (lookup.availableAppliances.join(', ') || '(none)');
+                    }
+                    node.warn('Grohe Sense: ' + hint + '. Names must match the Grohe app exactly (including spaces and capitalization).');
+                    node.status({ fill: 'red', shape: 'ring', text: node.applianceName + ' not found' });
                 }
 
             };

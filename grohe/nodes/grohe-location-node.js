@@ -6,6 +6,7 @@
 'use strict';
 
 const ondusApi = require('../lib/ondusApi.js');
+const locator = require('../lib/locator.js');
 
 module.exports = function (RED) {
     // The configuration node holds the username and password
@@ -15,7 +16,9 @@ module.exports = function (RED) {
 
         let node = this;
         node.config = n;
-        node.locationName = n.location;
+        // Trim so accidental leading / trailing whitespace does not silently
+        // break the exact name match against the dashboard. (#25)
+        node.locationName = (n.location || '').trim();
         node.connected = false;
 
         node.appliancesByRoomName = {};
@@ -87,31 +90,14 @@ module.exports = function (RED) {
             done();
         });
 
+        // Returns the full diagnostic lookup result (see lib/locator.js).
+        this.findAppliance = function (roomName, applianceName) {
+            return locator.findApplianceIds(node.location, node.appliancesByRoomName, roomName, applianceName);
+        };
+
+        // Back-compat: returns the ids object on success or undefined on failure.
         this.getApplianceIds = function (roomName, applianceName) {
-
-            let applianceIds;
-
-            if (node.appliancesByRoomName[roomName] !== undefined) {
-                let value = node.appliancesByRoomName[roomName];
-
-                let appliances = value.appliances;
-                let room = value.room;
-                for (let i = 0; i < appliances.length; i++) {
-                    let appliance = appliances[i];
-
-                    if (appliance.name === applianceName) {
-                        applianceIds = {
-                            locationId: node.location.id,
-                            roomId: room.id,
-                            applianceId: appliance.appliance_id, // why not id here?
-                        };
-
-                        break;
-                    }
-                }
-            }
-
-            return applianceIds;
+            return node.findAppliance(roomName, applianceName).ids;
         };
     }
 

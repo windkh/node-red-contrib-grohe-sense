@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.30.0] [2026-06-27]
+### improved appliance lookup diagnostics: room / appliance names are now matched via a unit-tested lib/locator helper that, on mismatch, reports the available names; the node warns when a matched appliance is not fully registered (stale appliances cause command timeouts); location name is trimmed - [#25](https://github.com/windkh/node-red-contrib-grohe-sense/issues/25)
+
 ## [0.29.0] [2026-06-27]
 ### adapted to the changed Sense Guard api: surfaced details.data_latest withdrawal + consumption summary as msg.payload.withdrawal / msg.payload.consumption, fixed convertWithdrawals to read the renamed max_flowrate field, updated the senseguardvalues example to use the live measurement, and added a fixture-backed test - [#26](https://github.com/windkh/node-red-contrib-grohe-sense/issues/26)
 
