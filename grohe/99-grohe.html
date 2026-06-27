@@ -156,6 +156,8 @@
         <dd>Current status flattened as <code>{ type: value }</code> (battery, wifi quality, connection state, ...).</dd>
         <dt>details <span class="property-type">object</span></dt>
         <dd>Detailed configuration of the appliance.</dd>
+        <dt class="optional">measurement <span class="property-type">object</span></dt>
+        <dd>Most recent reading (<code>temperature</code>, <code>humidity</code>, <code>battery</code>, <code>timestamp</code>, ...) taken from <code>details.data_latest</code>. Only present when the appliance reports it.</dd>
         <dt>notifications <span class="property-type">array</span></dt>
         <dd>Active notifications. Each entry includes the original API payload plus a human-readable <code>category</code> and <code>message</code>.</dd>
         <dt class="optional">command <span class="property-type">object</span></dt>

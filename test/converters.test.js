@@ -1,7 +1,10 @@
 'use strict';
 
 const assert = require('assert');
+const path = require('path');
 const converters = require('../grohe/lib/converters');
+
+const senseFixture = require(path.join(__dirname, 'fixtures', 'sense-issue-27.json'));
 
 describe('lib/converters', function () {
 
@@ -162,6 +165,32 @@ describe('lib/converters', function () {
 
             assert.strictEqual(result[1].category, 'Unknown');
             assert.ok(/Unkown notification category/.test(result[1].message));
+        });
+    });
+
+    // Locks in the changed Sense (type 101) api format captured in issue #27.
+    describe('changed Sense api (#27)', function () {
+        const raw = senseFixture.raw;
+        const expected = senseFixture.expected;
+
+        it('flattens the status array into the documented object', function () {
+            assert.deepStrictEqual(converters.convertStatus(raw.status), expected.status);
+        });
+
+        it('resolves the embedded notification to Warning / humidity message', function () {
+            const result = converters.convertNotifications(raw.notifications);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].category, expected.notifications[0].category);
+            assert.strictEqual(result[0].type, expected.notifications[0].type);
+            assert.strictEqual(result[0].message, expected.notifications[0].message);
+        });
+
+        it('computes statistics from the day-grouped measurement data', function () {
+            assert.deepStrictEqual(converters.convertData(raw.data.data), expected.statistics);
+        });
+
+        it('exposes details.data_latest.measurement as the current reading', function () {
+            assert.deepStrictEqual(raw.details.data_latest.measurement, expected.measurement);
         });
     });
 
