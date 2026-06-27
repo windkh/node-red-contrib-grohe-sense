@@ -156,7 +156,9 @@ function convertWithdrawals(withdrawals) {
             totalWaterCost += item.water_cost;
             totalEnerygCost += item.energy_cost;
             totalHotwaterShare += item.hotwater_share;
-            let flowrate = item.maxflowrate;
+            // The changed api renamed the day-grouped field to max_flowrate;
+            // data_latest still uses maxflowrate, so accept both. (#26)
+            let flowrate = item.max_flowrate !== undefined ? item.max_flowrate : item.maxflowrate;
             totalMaxFlowrate = getMax(flowrate, totalMaxFlowrate);
 
             if (date >= today) {
@@ -217,6 +219,30 @@ function convertData(data) {
     return statistics;
 }
 
+// Extracts the consumption summary that the changed Sense Guard api exposes in
+// details.data_latest (daily / average consumption and cost). Returns undefined
+// when none of the fields are present (e.g. for a Sense device). (#26)
+function convertConsumption(dataLatest) {
+    let fields = [
+        'daily_consumption',
+        'daily_cost',
+        'average_daily_consumption',
+        'average_monthly_consumption',
+    ];
+
+    let consumption = {};
+    let found = false;
+    for (let i = 0; i < fields.length; i++) {
+        let field = fields[i];
+        if (dataLatest[field] !== undefined) {
+            consumption[field] = dataLatest[field];
+            found = true;
+        }
+    }
+
+    return found ? consumption : undefined;
+}
+
 // Converts notifications to a notification with text.
 function convertNotifications(notifications) {
     let convertedNotifications = [];
@@ -238,5 +264,6 @@ module.exports = {
     convertMeasurement,
     convertWithdrawals,
     convertData,
+    convertConsumption,
     convertNotifications,
 };

@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.29.0] [2026-06-27]
+### adapted to the changed Sense Guard api: surfaced details.data_latest withdrawal + consumption summary as msg.payload.withdrawal / msg.payload.consumption, fixed convertWithdrawals to read the renamed max_flowrate field, updated the senseguardvalues example to use the live measurement, and added a fixture-backed test - [#26](https://github.com/windkh/node-red-contrib-grohe-sense/issues/26)
+
 ## [0.28.0] [2026-06-27]
 ### exposed the latest Sense reading (details.data_latest.measurement) as msg.payload.measurement and added a fixture-backed test for the changed Sense api - [#27](https://github.com/windkh/node-red-contrib-grohe-sense/issues/27)
 
