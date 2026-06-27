@@ -157,7 +157,11 @@
         <dt>details <span class="property-type">object</span></dt>
         <dd>Detailed configuration of the appliance.</dd>
         <dt class="optional">measurement <span class="property-type">object</span></dt>
-        <dd>Most recent reading (<code>temperature</code>, <code>humidity</code>, <code>battery</code>, <code>timestamp</code>, ...) taken from <code>details.data_latest</code>. Only present when the appliance reports it.</dd>
+        <dd>Most recent reading (<code>temperature</code>, <code>humidity</code>, <code>battery</code>, or for Sense Guard <code>flowrate</code> / <code>pressure</code> / <code>temperature_guard</code>, plus <code>timestamp</code>) taken from <code>details.data_latest</code>. Only present when the appliance reports it.</dd>
+        <dt class="optional">withdrawal <span class="property-type">object</span></dt>
+        <dd>Sense Guard only: the latest water withdrawal (<code>starttime</code>, <code>stoptime</code>, <code>waterconsumption</code>, <code>maxflowrate</code>) from <code>details.data_latest</code>.</dd>
+        <dt class="optional">consumption <span class="property-type">object</span></dt>
+        <dd>Sense Guard only: consumption summary (<code>daily_consumption</code>, <code>daily_cost</code>, <code>average_daily_consumption</code>, <code>average_monthly_consumption</code>) from <code>details.data_latest</code>.</dd>
         <dt>notifications <span class="property-type">array</span></dt>
         <dd>Active notifications. Each entry includes the original API payload plus a human-readable <code>category</code> and <code>message</code>.</dd>
         <dt class="optional">command <span class="property-type">object</span></dt>

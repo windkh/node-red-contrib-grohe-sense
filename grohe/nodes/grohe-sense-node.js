@@ -124,11 +124,25 @@ module.exports = function (RED) {
                                 result.details = details;
 
                                 // The changed api exposes the most recent reading directly
-                                // in details.data_latest. Surface it as a first-class field so
-                                // the current temperature / humidity / etc. is available without
-                                // requesting historical data. (#27)
-                                if (details.data_latest != null && details.data_latest.measurement != null) {
-                                    result.measurement = details.data_latest.measurement;
+                                // in details.data_latest. Surface its parts as first-class
+                                // fields so the current measurement / latest withdrawal /
+                                // consumption summary is available without requesting
+                                // historical data. (#27, #26)
+                                let dataLatest = details.data_latest;
+                                if (dataLatest != null) {
+                                    if (dataLatest.measurement != null) {
+                                        result.measurement = dataLatest.measurement;
+                                    }
+
+                                    // Sense Guard only: latest withdrawal + consumption summary.
+                                    if (dataLatest.withdrawals != null) {
+                                        result.withdrawal = dataLatest.withdrawals;
+                                    }
+
+                                    let consumption = converters.convertConsumption(dataLatest);
+                                    if (consumption != null) {
+                                        result.consumption = consumption;
+                                    }
                                 }
                             }
 

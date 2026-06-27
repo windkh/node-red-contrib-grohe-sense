@@ -1,0 +1,132 @@
+{
+    "_comment": "Sample of the changed Grohe Ondus API for a Sense Guard device (type 103). Captured in issue #26. 'raw' holds the responses returned by the individual ondusApi endpoints; 'expected' holds the msg.payload the sense node should produce after conversion.",
+    "raw": {
+        "status": [
+            { "type": "update_available", "value": 0 },
+            { "type": "wifi_quality", "value": -1 },
+            { "type": "connection", "value": 1 }
+        ],
+        "details": {
+            "appliance_id": "660e740d-3a50-4f38-b86e-78f1ec2fd512",
+            "name": "SenseGuard",
+            "type": 103,
+            "version": "01.44.Z22.0400.0101",
+            "status": [
+                { "type": "update_available", "value": 0 },
+                { "type": "wifi_quality", "value": -1 },
+                { "type": "connection", "value": 1 }
+            ],
+            "data_latest": {
+                "average_monthly_consumption": 13563,
+                "daily_cost": 0,
+                "average_daily_consumption": 452,
+                "daily_consumption": 540,
+                "withdrawals": {
+                    "starttime": "2026-05-16T22:12:36.000+02:00",
+                    "stoptime": "2026-05-16T22:13:25.000+02:00",
+                    "waterconsumption": 6.7,
+                    "maxflowrate": 8.9
+                },
+                "measurement": {
+                    "flowrate": 0,
+                    "pressure": 4.1,
+                    "temperature_guard": 18.5,
+                    "timestamp": "2026-05-16T22:44:15.000+02:00"
+                }
+            },
+            "notifications": [],
+            "command": {
+                "temp_user_unlock_on": false,
+                "reason_for_change": 1,
+                "pressure_measurement_running": false,
+                "buzzer_on": false,
+                "buzzer_sound_profile": 2,
+                "valve_open": true,
+                "measure_now": false
+            }
+        },
+        "notifications": [
+            {
+                "appliance_id": "660e740d-3a50-4f38-b86e-78f1ec2fd512",
+                "id": "1c6ca8c5-db2f-4c44-8f33-65c843631cd3",
+                "category": 10,
+                "is_read": true,
+                "timestamp": "2022-01-11T18:36:44.000+01:00",
+                "type": 460,
+                "threshold_quantity": "no",
+                "threshold_type": "no"
+            }
+        ],
+        "data": {
+            "data": {
+                "group_by": "day",
+                "measurement": [
+                    { "date": "2026-05-16", "flowrate": 0.4, "pressure": 4.18, "temperature_guard": 18.9, "min_pressure": 3.4, "max_pressure": 5.2, "median_pressure": 4.2, "q1_pressure": 4.1, "q3_pressure": 4.3 },
+                    { "date": "2026-05-15", "flowrate": 0.45, "pressure": 4.22, "temperature_guard": 18.66, "min_pressure": 3.5, "max_pressure": 5.3, "median_pressure": 4.2, "q1_pressure": 4.1, "q3_pressure": 4.3 }
+                ],
+                "withdrawals": [
+                    { "date": "2026-05-16", "waterconsumption": 528.9, "hotwater_share": 0, "water_cost": 0, "energy_cost": 0, "max_flowrate": 23 },
+                    { "date": "2026-05-15", "waterconsumption": 600.8, "hotwater_share": 0, "water_cost": 0, "energy_cost": 0, "max_flowrate": 19.8 }
+                ]
+            }
+        }
+    },
+    "expected": {
+        "status": {
+            "update_available": 0,
+            "wifi_quality": -1,
+            "connection": 1
+        },
+        "measurement": {
+            "flowrate": 0,
+            "pressure": 4.1,
+            "temperature_guard": 18.5,
+            "timestamp": "2026-05-16T22:44:15.000+02:00"
+        },
+        "withdrawal": {
+            "starttime": "2026-05-16T22:12:36.000+02:00",
+            "stoptime": "2026-05-16T22:13:25.000+02:00",
+            "waterconsumption": 6.7,
+            "maxflowrate": 8.9
+        },
+        "consumption": {
+            "daily_consumption": 540,
+            "daily_cost": 0,
+            "average_daily_consumption": 452,
+            "average_monthly_consumption": 13563
+        },
+        "notifications": [
+            {
+                "category": "Information",
+                "type": 460,
+                "message": "Firmware update of sense guard available"
+            }
+        ],
+        "statistics": {
+            "measurement": {
+                "from": "2026-05-16",
+                "to": "2026-05-15",
+                "duration": 86400,
+                "count": 2,
+                "temperatureGuard": { "min": 18.66, "max": 18.9 },
+                "flowrate": { "min": 0.4, "max": 0.45 },
+                "pressure": { "min": 4.18, "max": 4.22 }
+            },
+            "withdrawals": {
+                "from": "2026-05-16",
+                "to": "2026-05-15",
+                "count": 2,
+                "totalWaterConsumption": 1129.6999999999998,
+                "totalWaterCost": 0,
+                "totalEnerygCost": 0,
+                "totalHotwaterShare": 0,
+                "todayWaterConsumption": 528.9,
+                "todayWaterCost": 0,
+                "todayEnerygCost": 0,
+                "todayHotwaterShare": 0,
+                "totalMaxFlowrate": 23,
+                "todayMaxFlowrate": 23
+            }
+        }
+    }
+}

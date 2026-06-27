@@ -5,6 +5,7 @@ const path = require('path');
 const converters = require('../grohe/lib/converters');
 
 const senseFixture = require(path.join(__dirname, 'fixtures', 'sense-issue-27.json'));
+const senseGuardFixture = require(path.join(__dirname, 'fixtures', 'senseguard-issue-26.json'));
 
 describe('lib/converters', function () {
 
@@ -191,6 +192,61 @@ describe('lib/converters', function () {
 
         it('exposes details.data_latest.measurement as the current reading', function () {
             assert.deepStrictEqual(raw.details.data_latest.measurement, expected.measurement);
+        });
+    });
+
+    describe('convertConsumption', function () {
+        it('extracts the present consumption fields', function () {
+            const result = converters.convertConsumption({
+                daily_consumption: 540,
+                daily_cost: 0,
+                average_daily_consumption: 452,
+                average_monthly_consumption: 13563,
+                measurement: { flowrate: 0 },
+            });
+            assert.deepStrictEqual(result, {
+                daily_consumption: 540,
+                daily_cost: 0,
+                average_daily_consumption: 452,
+                average_monthly_consumption: 13563,
+            });
+        });
+
+        it('returns undefined when no consumption fields are present (e.g. a Sense device)', function () {
+            assert.strictEqual(converters.convertConsumption({ measurement: { humidity: 50 } }), undefined);
+        });
+    });
+
+    // Locks in the changed Sense Guard (type 103) api format captured in issue #26.
+    describe('changed Sense Guard api (#26)', function () {
+        const raw = senseGuardFixture.raw;
+        const expected = senseGuardFixture.expected;
+
+        it('flattens the status array into the documented object', function () {
+            assert.deepStrictEqual(converters.convertStatus(raw.status), expected.status);
+        });
+
+        it('resolves the embedded notification to Information / firmware message', function () {
+            const result = converters.convertNotifications(raw.notifications);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0].category, expected.notifications[0].category);
+            assert.strictEqual(result[0].type, expected.notifications[0].type);
+            assert.strictEqual(result[0].message, expected.notifications[0].message);
+        });
+
+        it('computes measurement + withdrawal statistics, including max_flowrate', function () {
+            const result = converters.convertData(raw.data.data);
+            assert.deepStrictEqual(result, expected.statistics);
+            // Regression guard for the renamed api field (#26).
+            assert.strictEqual(result.withdrawals.totalMaxFlowrate, 23);
+            assert.strictEqual(result.withdrawals.todayMaxFlowrate, 23);
+        });
+
+        it('exposes the latest measurement, withdrawal and consumption summary', function () {
+            const dataLatest = raw.details.data_latest;
+            assert.deepStrictEqual(dataLatest.measurement, expected.measurement);
+            assert.deepStrictEqual(dataLatest.withdrawals, expected.withdrawal);
+            assert.deepStrictEqual(converters.convertConsumption(dataLatest), expected.consumption);
         });
     });
 
