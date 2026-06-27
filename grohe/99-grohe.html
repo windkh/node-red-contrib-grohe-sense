@@ -53,7 +53,8 @@
     </dl>
 
     <h3>Details</h3>
-    <p>On startup the node logs in to <code>idp2-apigw.cloud.grohe.com</code>, retrieves the dashboard, and caches the rooms and appliances of the configured location. The access token is automatically refreshed every 30 minutes. If the network is temporarily unavailable, the refresh is retried and the node recovers automatically (as long as the outage is shorter than the refresh-token lifetime of ~1 hour).</p>
+    <p>On startup the node logs in to <code>idp2-apigw.cloud.grohe.com</code>, retrieves the dashboard, and caches the rooms and appliances of the configured location. The access token is automatically refreshed every 30 minutes.</p>
+    <p>If the internet is unavailable at startup, or the connection is later lost (including a failed token refresh), the node keeps retrying the login with exponential backoff (5&nbsp;s up to 60&nbsp;s) and recovers automatically once connectivity returns. Connection attempts, successes and failures are written to the Node-RED log. While disconnected the dependent <code>grohe sense</code> nodes show <i>disconnected</i>.</p>
 </script>
 
 
@@ -173,7 +174,7 @@
     </dl>
 
     <h3>Status</h3>
-    <p>The node icon reflects the runtime state: <em>initializing</em>, <em>connected</em>, <em>updating</em>, <em>ok</em>, <em>N notifications</em>, or <em>failed</em>.</p>
+    <p>The node icon reflects the runtime state: <em>connecting</em>, <em>connected</em>, <em>updating</em>, <em>ok</em>, <em>N notifications</em>, <em>disconnected</em>, <em>&lt;name&gt; not found</em>, or <em>failed</em>. When the configuration node loses its connection the node shows <em>disconnected</em> and returns to <em>connected</em> automatically once it reconnects.</p>
 
     <h3>Examples</h3>
     <p>See the flows in the <code>examples/</code> folder of this package for ready-to-import sample flows.</p>

@@ -195,12 +195,19 @@ class OndusSession {
             });
     };
 
-    start() {
+    // onError (optional) is invoked when a scheduled token refresh fails, e.g.
+    // because the internet connection was lost. This lets the caller tear the
+    // session down and re-enter its reconnect loop instead of silently dying. (#20)
+    start(onError) {
         let session = this;
 
         let interval = 1000 * session.accessTokenExpiresIn / 2; // 1800s
         session.refreshTimer = setInterval(function() {
-            session.refreshAccessToken();
+            session.refreshAccessToken().catch(function (error) {
+                if (typeof onError === 'function') {
+                    onError(error);
+                }
+            });
         }, interval);
     };
 
@@ -330,7 +337,9 @@ class OndusSession {
 };
 
 // Exported Methds
-async function login(username, password) {
+// onRefreshFailed (optional) is forwarded to session.start() and called if a
+// scheduled token refresh later fails. (#20)
+async function login(username, password, onRefreshFailed) {
 
     let session = new OndusSession();
 
@@ -338,7 +347,7 @@ async function login(username, password) {
     await session.getTokenUrl(username, password);
     await session.getRefreshToken();
 
-    session.start();
+    session.start(onRefreshFailed);
     return session;
 }
 

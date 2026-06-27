@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.31.0] [2026-06-27]
+### the location node now keeps retrying login with exponential backoff (5s..60s) when the internet is unavailable at startup or the connection is later lost (incl. a failed token refresh), and recovers automatically; sense nodes show 'disconnected' and reconnect without stacking duplicate input handlers; added connection log messages - [#20](https://github.com/windkh/node-red-contrib-grohe-sense/issues/20)
+
 ## [0.30.0] [2026-06-27]
 ### improved appliance lookup diagnostics: room / appliance names are now matched via a unit-tested lib/locator helper that, on mismatch, reports the available names; the node warns when a matched appliance is not fully registered (stale appliances cause command timeouts); location name is trimmed - [#25](https://github.com/windkh/node-red-contrib-grohe-sense/issues/25)
 

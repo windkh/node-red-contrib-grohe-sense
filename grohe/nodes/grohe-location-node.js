@@ -7,6 +7,20 @@
 
 const ondusApi = require('../lib/ondusApi.js');
 const locator = require('../lib/locator.js');
+const backoff = require('../lib/backoff.js');
+
+const RECONNECT_BASE_MS = 5000;
+const RECONNECT_MAX_MS = 60000;
+
+function describeError(exception) {
+    if (exception === undefined || exception === null) {
+        return 'unknown error';
+    }
+    if (exception.message) {
+        return exception.message;
+    }
+    return String(exception);
+}
 
 module.exports = function (RED) {
     // The configuration node holds the username and password
@@ -22,66 +36,153 @@ module.exports = function (RED) {
         node.connected = false;
 
         node.appliancesByRoomName = {};
+        node.closing = false;
+        node.reconnectTimer = undefined;
+        node.reconnectAttempt = 0;
 
-        if (node.credentials !== undefined && node.credentials.username !== undefined && node.credentials.password !== undefined
-            && node.credentials.username !== '' && node.credentials.password !== '') {
+        let hasCredentials = node.credentials !== undefined
+            && node.credentials.username !== undefined && node.credentials.username !== ''
+            && node.credentials.password !== undefined && node.credentials.password !== '';
 
-            (async () => {
+        // Tear down the current session (e.g. after the connection was lost). (#20)
+        node.disconnect = function () {
+            if (node.session && typeof node.session.stop === 'function') {
+                ondusApi.logoff(node.session);
+            }
+            node.session = undefined;
+            if (node.connected) {
+                node.connected = false;
+                node.emit('disconnected');
+            }
+        };
 
-                try {
-                    node.session = await ondusApi.login(node.credentials.username, node.credentials.password);
+        // Schedule the next connection attempt with exponential backoff. (#20)
+        node.scheduleReconnect = function () {
+            if (node.closing) {
+                return;
+            }
 
-                    let response = await node.session.getDahsboard();
-                    let dashboard = JSON.parse(response.text);
+            let delay = backoff.computeBackoffDelay(node.reconnectAttempt, RECONNECT_BASE_MS, RECONNECT_MAX_MS);
+            node.reconnectAttempt++;
+            node.log('Grohe: next connection attempt in ' + Math.round(delay / 1000) + 's.');
 
-                    let locations = dashboard.locations;
+            node.reconnectTimer = setTimeout(function () {
+                node.reconnectTimer = undefined;
+                node.connect();
+            }, delay);
+        };
 
-                    for (let i = 0; i < locations.length; i++) {
-                        let location = locations[i];
+        // Called by the refresh timer when a scheduled token refresh fails,
+        // e.g. because the internet connection was lost. (#20)
+        node.onRefreshFailed = function (exception) {
+            if (node.closing || !node.connected) {
+                return;
+            }
+            node.warn('Grohe: token refresh failed (' + describeError(exception) + '), reconnecting...');
+            node.disconnect();
+            node.reconnectAttempt = 0; // recover quickly after a lost connection
+            node.scheduleReconnect();
+        };
 
-                        if (location.name === node.locationName) {
-                            node.location = location;
-                            node.log('location ' + location.name);
+        node.connect = async function () {
+            if (node.closing) {
+                return;
+            }
 
-                            node.rooms = location.rooms;
+            node.log('Grohe: connecting to the ondus cloud...');
+            node.emit('connecting');
 
-                            for (let j = 0; j < node.rooms.length; j++) {
-                                let room = node.rooms[j];
-                                node.log('    room ' + room.name);
+            let session;
+            let dashboard;
+            try {
+                session = await ondusApi.login(node.credentials.username, node.credentials.password, node.onRefreshFailed);
 
-                                let appliances = room.appliances;
-                                node.appliancesByRoomName[room.name] = {
-                                    room: room,
-                                    appliances: appliances,
-                                };
+                let response = await session.getDahsboard();
+                dashboard = JSON.parse(response.text);
+            }
+            catch (exception) {
+                // Connectivity / authentication problem - keep retrying so the node
+                // recovers automatically once the internet is back. (#20)
+                node.connected = false;
+                node.emit('initializeFailed', exception);
+                node.emit('disconnected');
+                node.warn('Grohe: connection failed: ' + describeError(exception) + '.');
+                node.scheduleReconnect();
+                return;
+            }
 
-                                for (let k = 0; k < appliances.length; k++) {
-                                    let appliance = appliances[k];
-                                    node.log('        appliance ' + appliance.name);
-                                }
-                            }
+            node.session = session;
 
-                            node.connected = true;
-                            node.emit('initialized');
-                            break;
-                        }
-                    }
+            let locations = dashboard.locations || [];
+            let foundLocation;
+            for (let i = 0; i < locations.length; i++) {
+                if (locations[i].name === node.locationName) {
+                    foundLocation = locations[i];
+                    break;
                 }
-                catch (exception) {
-                    node.connected = false;
-                    node.emit('initializeFailed', exception);
-                    node.warn(exception);
+            }
+
+            if (foundLocation === undefined) {
+                // Login worked but the configured location does not exist - this is a
+                // configuration error, not a connectivity one, so do not spin the
+                // retry loop. Surface it so the user can fix the name.
+                node.disconnect();
+                node.emit('initializeFailed', 'location "' + node.locationName + '" not found');
+                node.emit('disconnected');
+                node.warn('Grohe: location "' + node.locationName + '" not found in the account. Available locations: ' +
+                    (locations.map(function (l) { return l.name; }).join(', ') || '(none)') + '.');
+                return;
+            }
+
+            node.location = foundLocation;
+            node.rooms = foundLocation.rooms || [];
+            node.appliancesByRoomName = {};
+            node.log('Grohe: location ' + foundLocation.name);
+
+            for (let j = 0; j < node.rooms.length; j++) {
+                let room = node.rooms[j];
+                node.log('Grohe:     room ' + room.name);
+
+                let appliances = room.appliances || [];
+                node.appliancesByRoomName[room.name] = {
+                    room: room,
+                    appliances: appliances,
+                };
+
+                for (let k = 0; k < appliances.length; k++) {
+                    node.log('Grohe:         appliance ' + appliances[k].name);
                 }
-            })();
+            }
+
+            node.reconnectAttempt = 0;
+            node.connected = true;
+            node.log('Grohe: connected.');
+            node.emit('initialized');
+            node.emit('connected');
+        };
+
+        if (hasCredentials) {
+            node.connect();
         }
         else {
-            node.connected = false;
-            node.emit('initializeFailed', 'credentials missing');
-            node.warn('credentials missing');
+            // Defer so sense nodes (created after this config node) can subscribe first.
+            setImmediate(function () {
+                node.connected = false;
+                node.emit('initializeFailed', 'credentials missing');
+                node.emit('disconnected');
+                node.warn('credentials missing');
+            });
         }
 
         this.on('close', function (done) {
-            ondusApi.logoff(node.session);
+            node.closing = true;
+            if (node.reconnectTimer !== undefined) {
+                clearTimeout(node.reconnectTimer);
+                node.reconnectTimer = undefined;
+            }
+            if (node.session && typeof node.session.stop === 'function') {
+                ondusApi.logoff(node.session);
+            }
             node.session = {};
             node.location = {};
             node.rooms = {};

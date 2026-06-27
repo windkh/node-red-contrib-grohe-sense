@@ -79,7 +79,9 @@ Holds the Ondus credentials and identifies the location to operate on.
 | Username | string | Email of the Grohe Ondus account. |
 | Password | string | Password of the Grohe Ondus account (stored encrypted by Node-RED). |
 
-On startup the node logs in, retrieves the dashboard, and caches the rooms and appliances of the configured location. The access token is automatically refreshed every 30 minutes; short internet outages are tolerated.
+On startup the node logs in, retrieves the dashboard, and caches the rooms and appliances of the configured location. The access token is automatically refreshed every 30 minutes.
+
+If the internet is unavailable at startup (or the connection is later lost — including a failed token refresh), the node keeps retrying the login with exponential backoff (5s up to 60s) and recovers automatically once connectivity returns. Connection attempts, successes, and failures are written to the Node-RED log to aid debugging. While disconnected, the dependent `grohe sense` nodes show *disconnected*. (see [#20](https://github.com/windkh/node-red-contrib-grohe-sense/issues/20))
 
 
 ## `grohe sense`
@@ -115,7 +117,7 @@ Any incoming message triggers a poll. The optional fields on `msg.payload` contr
 | `statistics` | object | Pre-computed min/max temperature, humidity, pressure, flow rate, and today/total water consumption derived from `data`. |
 
 ### Status indicator
-The node icon reflects the runtime state: *initializing*, *connected*, *updating*, *ok*, *N notifications*, or *failed*.
+The node icon reflects the runtime state: *connecting*, *connected*, *updating*, *ok*, *N notifications*, *disconnected*, *&lt;name&gt; not found*, or *failed*. When the configuration node loses its connection the sense node shows *disconnected* and automatically returns to *connected* once the connection is re-established.
 
 
 ## Examples
