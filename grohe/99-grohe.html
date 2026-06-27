@@ -123,9 +123,9 @@
         <dt>Location <span class="property-type">grohe location</span></dt>
         <dd>The configuration node that holds the credentials and identifies the location.</dd>
         <dt>Room <span class="property-type">string</span></dt>
-        <dd>Name of the room the appliance lives in (as shown in the Grohe Ondus app).</dd>
+        <dd>Name of the room the appliance lives in, matched <b>exactly</b> as shown in the Grohe Ondus app (including spaces and capitalization).</dd>
         <dt>Name <span class="property-type">string</span></dt>
-        <dd>Name of the appliance.</dd>
+        <dd>Name of the appliance, matched <b>exactly</b> as shown in the Grohe Ondus app. If the room / name does not match, the node logs the available names. If valve commands time out while reading works, the name is likely resolving to a stale, no longer registered appliance &ndash; rename it in the app and re-select it here.</dd>
         <dt>Type <span class="property-type">number</span></dt>
         <dd>Device type: <code>101</code> = Sense, <code>102</code> = Sense Plus, <code>103</code> = Sense Guard.</dd>
         <dt>Description <span class="property-type">string</span></dt>

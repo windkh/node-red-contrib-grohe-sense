@@ -85,6 +85,8 @@ On startup the node logs in, retrieves the dashboard, and caches the rooms and a
 ## `grohe sense`
 The node is able to get the status of a Grohe Sense, Grohe Sense Plus or Grohe Sense Guard appliance. It is also used to send commands to a Sense Guard.
 
+> **Note on names:** the *Room* and *Name* (appliance) must match the values shown in the Grohe Ondus app **exactly**, including spaces and capitalization. If they don't match, the node logs the available room / appliance names to help you correct them. If commands such as *open/close valve* time out while reading still works, the configured name is likely resolving to a stale appliance that is no longer fully registered — rename it in the app and re-select it here. (see [#25](https://github.com/windkh/node-red-contrib-grohe-sense/issues/25))
+
 ### Inputs
 Any incoming message triggers a poll. The optional fields on `msg.payload` control what happens:
 
