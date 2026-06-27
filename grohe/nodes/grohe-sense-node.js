@@ -122,6 +122,14 @@ module.exports = function (RED) {
 
                             if (details != null) {
                                 result.details = details;
+
+                                // The changed api exposes the most recent reading directly
+                                // in details.data_latest. Surface it as a first-class field so
+                                // the current temperature / humidity / etc. is available without
+                                // requesting historical data. (#27)
+                                if (details.data_latest != null && details.data_latest.measurement != null) {
+                                    result.measurement = details.data_latest.measurement;
+                                }
                             }
 
                             if (notifications != null) {

@@ -104,6 +104,7 @@ Any incoming message triggers a poll. The optional fields on `msg.payload` contr
 | `info` | object | Static appliance information (serial, type, firmware, configuration). |
 | `status` | object | Current status flattened as `{ type: value }` (battery, wifi quality, connection state, ...). |
 | `details` | object | Detailed configuration of the appliance. |
+| `measurement` | object | Most recent reading (`temperature`, `humidity`, `battery`, `timestamp`, ...) taken from `details.data_latest` — only present when the appliance reports it. |
 | `notifications` | array | Active notifications, each annotated with a human-readable `category` and `message`. |
 | `command` | object | Only for Sense Guard: the current command state (e.g. `valve_open`). |
 | `data` | object | Raw aggregated historical data — only when `payload.data` was specified. |

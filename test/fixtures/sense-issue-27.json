@@ -1,0 +1,138 @@
+{
+    "_comment": "Sample of the changed Grohe Ondus API for a Sense device (type 101). Captured in issue #27. 'raw' holds the responses returned by the individual ondusApi endpoints; 'expected' holds the msg.payload the sense node should produce after conversion.",
+    "raw": {
+        "info": [
+            {
+                "appliance_id": "f23de120-f9b2-4bd2-991f-f4e0c5c7abaa",
+                "installation_date": "2022-06-29T12:35:53.000+02:00",
+                "name": "Sense3",
+                "serial_number": "305a32303142333331343542303130313030303430303043",
+                "type": 101,
+                "version": "01.20.Z20.0400.0100",
+                "tdt": "2026-05-16T03:08:42.000+02:00",
+                "timezone": 60,
+                "config": {
+                    "thresholds": [
+                        { "quantity": "temperature", "type": "min", "value": 10, "enabled": true },
+                        { "quantity": "temperature", "type": "max", "value": 25, "enabled": true },
+                        { "quantity": "humidity", "type": "min", "value": 30, "enabled": true },
+                        { "quantity": "humidity", "type": "max", "value": 100, "enabled": true }
+                    ]
+                },
+                "role": "owner",
+                "registration_complete": true
+            }
+        ],
+        "status": [
+            { "type": "update_available", "value": 0 },
+            { "type": "wifi_quality", "value": 0 },
+            { "type": "battery", "value": 80 },
+            { "type": "connection", "value": 1 }
+        ],
+        "details": {
+            "appliance_id": "f23de120-f9b2-4bd2-991f-f4e0c5c7abaa",
+            "installation_date": "2022-06-29T12:35:53.000+02:00",
+            "name": "Sense3",
+            "serial_number": "305a32303142333331343542303130313030303430303043",
+            "type": 101,
+            "version": "01.20.Z20.0400.0100",
+            "tdt": "2026-05-16T03:08:42.000+02:00",
+            "timezone": 60,
+            "config": {
+                "thresholds": [
+                    { "quantity": "temperature", "type": "min", "value": 10, "enabled": true },
+                    { "quantity": "temperature", "type": "max", "value": 25, "enabled": true },
+                    { "quantity": "humidity", "type": "min", "value": 30, "enabled": true },
+                    { "quantity": "humidity", "type": "max", "value": 100, "enabled": true }
+                ]
+            },
+            "role": "owner",
+            "registration_complete": true,
+            "status": [
+                { "type": "update_available", "value": 0 },
+                { "type": "wifi_quality", "value": 0 },
+                { "type": "battery", "value": 80 },
+                { "type": "connection", "value": 1 }
+            ],
+            "data_latest": {
+                "measurement": {
+                    "battery": 80,
+                    "humidity": 85,
+                    "temperature": 17.6,
+                    "timestamp": "2026-05-16T03:08:40.000+02:00"
+                }
+            },
+            "notifications": [
+                {
+                    "appliance_id": "f23de120-f9b2-4bd2-991f-f4e0c5c7abaa",
+                    "id": "dcdfbb71-fc0a-442c-94fd-301e17fe2e2a",
+                    "category": 20,
+                    "is_read": false,
+                    "timestamp": "2026-05-11T13:10:54.000+02:00",
+                    "type": 31,
+                    "threshold_quantity": "no",
+                    "threshold_type": "no"
+                }
+            ]
+        },
+        "notifications": [
+            {
+                "appliance_id": "f23de120-f9b2-4bd2-991f-f4e0c5c7abaa",
+                "id": "dcdfbb71-fc0a-442c-94fd-301e17fe2e2a",
+                "category": 20,
+                "is_read": false,
+                "timestamp": "2026-05-11T13:10:54.000+02:00",
+                "type": 31,
+                "threshold_quantity": "no",
+                "threshold_type": "no"
+            }
+        ],
+        "data": {
+            "data": {
+                "group_by": "day",
+                "measurement": [
+                    { "date": "2026-05-16", "temperature": 17.65, "humidity": 84 },
+                    { "date": "2026-05-15", "temperature": 17.7, "humidity": 83 }
+                ]
+            }
+        }
+    },
+    "expected": {
+        "status": {
+            "update_available": 0,
+            "wifi_quality": 0,
+            "battery": 80,
+            "connection": 1
+        },
+        "measurement": {
+            "battery": 80,
+            "humidity": 85,
+            "temperature": 17.6,
+            "timestamp": "2026-05-16T03:08:40.000+02:00"
+        },
+        "notifications": [
+            {
+                "category": "Warning",
+                "type": 31,
+                "message": "Humidity levels have exceeded the maximum configured limit"
+            }
+        ],
+        "data": {
+            "group_by": "day",
+            "measurement": [
+                { "date": "2026-05-16", "temperature": 17.65, "humidity": 84 },
+                { "date": "2026-05-15", "temperature": 17.7, "humidity": 83 }
+            ]
+        },
+        "statistics": {
+            "measurement": {
+                "from": "2026-05-16",
+                "to": "2026-05-15",
+                "duration": 86400,
+                "count": 2,
+                "temperature": { "min": 17.65, "max": 17.7 },
+                "humidity": { "min": 83, "max": 84 }
+            }
+        }
+    }
+}

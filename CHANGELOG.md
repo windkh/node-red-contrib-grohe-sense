@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.28.0] [2026-06-27]
+### exposed the latest Sense reading (details.data_latest.measurement) as msg.payload.measurement and added a fixture-backed test for the changed Sense api - [#27](https://github.com/windkh/node-red-contrib-grohe-sense/issues/27)
+
 ## [0.27.0] [2026-05-16]
 ### moved lib/ and nodes/ folders under grohe/ to keep the node-red package self-contained
 
