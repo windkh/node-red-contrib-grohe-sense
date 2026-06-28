@@ -9,6 +9,26 @@
 const ondusApi = require('../lib/ondusApi.js');
 const converters = require('../lib/converters.js');
 
+// Superagent only puts the HTTP status text (e.g. "Bad Request") in error.message.
+// The server usually explains the real reason in the response body, so append it.
+function httpErrorDetail(exception) {
+    let response = exception && exception.response;
+    if (response) {
+        if (response.text) {
+            return response.text;
+        }
+        if (response.body && Object.keys(response.body).length > 0) {
+            return JSON.stringify(response.body);
+        }
+    }
+    return '';
+}
+
+function describeHttpError(prefix, exception) {
+    let detail = httpErrorDetail(exception);
+    return prefix + ': ' + exception.message + (detail ? ' - ' + detail : '');
+}
+
 module.exports = function (RED) {
     function GroheSenseNode(config) {
         RED.nodes.createNode(this, config);
@@ -129,7 +149,22 @@ module.exports = function (RED) {
                     if (msg.payload !== undefined && msg.payload.data !== undefined) {
                         let fromDate = converters.convertToDate(msg.payload.data.from);
                         let toDate = converters.convertToDate(msg.payload.data.to);
+
+                        // groupBy is restricted to hour | day | week | month | year (hour =
+                        // finest) and the api expects it in lower case. Accept any casing on
+                        // input; reject anything else without failing the flow.
                         let groupBy = msg.payload.data.groupBy;
+                        if (groupBy !== undefined) {
+                            let normalized = converters.normalizeGroupBy(groupBy);
+                            if (converters.isValidGroupBy(normalized)) {
+                                groupBy = normalized;
+                            }
+                            else {
+                                node.error('Grohe Sense: invalid groupBy "' + groupBy + '" - expected hour, day, week, month or year. Falling back to day.', msg);
+                                groupBy = 'day';
+                            }
+                        }
+
                         try {
                             let responseData = await node.config.session.getApplianceData(
                                 node.applianceIds.locationId,
@@ -141,7 +176,7 @@ module.exports = function (RED) {
                             data = JSON.parse(responseData.text);
                         }
                         catch (exception) {
-                            let errorMessage = 'getApplianceData failed: ' + exception.message;
+                            let errorMessage = describeHttpError('getApplianceData failed', exception);
                             node.error(errorMessage, msg);
                             node.status({ fill: 'red', shape: 'ring', text: 'failed' });
                         }
@@ -203,8 +238,14 @@ module.exports = function (RED) {
                     }
 
                     if (data != null) {
-                        result.data = data.data;
+                        result.data = data.data; // full raw inner content, kept for backward compatibility
                         result.statistics = converters.convertData(data.data);
+
+                        // Surface the two useful arrays of the aggregated response as
+                        // clean top-level arrays (default [] when absent). (aggregated data)
+                        let aggregated = converters.extractAggregated(data);
+                        result.measurements = aggregated.measurements;
+                        result.withdrawals = aggregated.withdrawals;
                     }
 
                     if (info[0].type === ondusApi.OndusType.SenseGuard) {
@@ -233,7 +274,7 @@ module.exports = function (RED) {
                     }
                 }
                 catch (exception) {
-                    let errorMessage = 'Caught exception: ' + exception.message;
+                    let errorMessage = describeHttpError('Caught exception', exception);
                     node.error(errorMessage, msg);
                     node.status({ fill: 'red', shape: 'ring', text: 'failed' });
                 }
