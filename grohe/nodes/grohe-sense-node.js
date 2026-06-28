@@ -141,6 +141,96 @@ module.exports = function (RED) {
                 try {
                     node.status({ fill: 'green', shape: 'ring', text: 'updating...' });
 
+                    // Account-wide notification operations (not gated on device type).
+                    // Each is a dedicated request: perform it, enrich msg.payload and return. (notifications)
+                    let session = node.config.session;
+
+                    if (msg.payload !== undefined && msg.payload.notifications !== undefined) {
+                        if (msg.payload.notifications === true) {
+                            let all = await session.getAllNotifications();
+                            let applianceId = msg.payload.applianceId !== undefined ? msg.payload.applianceId : node.applianceIds.applianceId;
+                            if (applianceId) {
+                                all = all.filter(function (n) { return n.appliance_id === applianceId; });
+                            }
+                            msg.payload.notifications = all;
+                            node.send([msg]);
+                            node.status({ fill: 'green', shape: 'ring', text: all.length + ' notifications' });
+                            return;
+                        }
+                        else if (typeof msg.payload.notifications === 'object') {
+                            let page = msg.payload.notifications;
+                            let response = await session.getNotifications(page.pageSize, page.continuationToken);
+                            msg.payload.notifications = JSON.parse(response.text);
+                            node.send([msg]);
+                            node.status({ fill: 'green', shape: 'ring', text: 'ok' });
+                            return;
+                        }
+                        else {
+                            node.error('Grohe Sense: msg.payload.notifications must be true or an object { pageSize, continuationToken }.', msg);
+                            node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+                            return;
+                        }
+                    }
+
+                    if (msg.payload !== undefined && msg.payload.markRead !== undefined) {
+                        let markRead = msg.payload.markRead;
+                        if (typeof markRead === 'string') {
+                            await session.markNotificationRead(markRead);
+                        }
+                        else if (Array.isArray(markRead)) {
+                            await session.markNotificationsRead(markRead.map(function (id) { return { notification_id: id, is_read: true }; }));
+                        }
+                        else {
+                            node.error('Grohe Sense: msg.payload.markRead must be a notification id (string) or an array of ids.', msg);
+                            node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+                            return;
+                        }
+                        msg.payload.result = { markRead: markRead };
+                        node.send([msg]);
+                        node.status({ fill: 'green', shape: 'ring', text: 'ok' });
+                        return;
+                    }
+
+                    if (msg.payload !== undefined && msg.payload.markAllRead === true) {
+                        let all = await session.getAllNotifications();
+                        let unread = all.filter(function (n) { return n.is_read === false; });
+                        if (unread.length > 0) {
+                            await session.markNotificationsRead(unread.map(function (n) { return { notification_id: n.notification_id, is_read: true }; }));
+                        }
+                        msg.payload.result = { markAllRead: unread.length };
+                        node.send([msg]);
+                        node.status({ fill: 'green', shape: 'ring', text: 'ok' });
+                        return;
+                    }
+
+                    if (msg.payload !== undefined && msg.payload.deleteNotification !== undefined) {
+                        let id = msg.payload.deleteNotification;
+                        if (typeof id !== 'string') {
+                            node.error('Grohe Sense: msg.payload.deleteNotification must be a notification id (string).', msg);
+                            node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+                            return;
+                        }
+                        await session.deleteNotification(id);
+                        msg.payload.result = { deleted: [id] };
+                        node.send([msg]);
+                        node.status({ fill: 'green', shape: 'ring', text: 'ok' });
+                        return;
+                    }
+
+                    if (msg.payload !== undefined && msg.payload.deleteNotifications !== undefined) {
+                        let idsToDelete = msg.payload.deleteNotifications;
+                        if (!Array.isArray(idsToDelete)) {
+                            node.error('Grohe Sense: msg.payload.deleteNotifications must be an array of notification ids.', msg);
+                            node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+                            return;
+                        }
+                        await session.deleteNotifications(idsToDelete);
+                        msg.payload.result = { deleted: idsToDelete };
+                        node.send([msg]);
+                        node.status({ fill: 'green', shape: 'ring', text: 'ok' });
+                        return;
+                    }
+
                     if (node.devicetype === ondusApi.OndusType.SenseGuard) {
                         if (msg.payload !== undefined && msg.payload.command !== undefined) {
                             let command = msg.payload.command;

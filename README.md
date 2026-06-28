@@ -143,6 +143,36 @@ POST …/appliances/{applianceId}/command
 
 See the example flow [**senseguardcommand**](examples/senseguardcommand.json).
 
+### Notifications
+Notifications are read **per account** (not per appliance); each notification carries its
+`appliance_id`, `room_id`/`room_name`, and `location_id`/`location_name` so you can filter client-side. These operations are **not** gated on device type. Each is a dedicated request — the result is placed back on `msg.payload` and the node sends a single message.
+
+```js
+msg.payload = { notifications: true };                          // all, merged across pages -> msg.payload.notifications (array)
+msg.payload = { notifications: true, applianceId: "aaaa-…" };   // all, filtered to one appliance
+msg.payload = { notifications: { pageSize: 50 } };              // one page object (pass continuationToken to page on)
+msg.payload = { markRead: "<notificationId>" };                 // mark one read (PUT)
+msg.payload = { markRead: ["id1","id2"] };                      // mark several read (PATCH)
+msg.payload = { markAllRead: true };                            // mark every unread notification read
+msg.payload = { deleteNotification: "<notificationId>" };       // delete one
+msg.payload = { deleteNotifications: ["id1","id2"] };           // delete several
+```
+
+A `ProfileNotification` has: `notification_id`, `is_read`, `notification_type`, `category`, `title`, `description`, `web_url`, `timestamp`, `appliance_id`, `appliance_name`, `room_id`, `room_name`, `location_id`, `location_name`.
+
+The underlying REST calls:
+
+```
+GET    …/profile/notifications?pageSize=50&continuationToken=<token>
+GET    …/profile/notifications/{id}
+PUT    …/profile/notifications/{id}     { …, "is_read": true }
+PATCH  …/profile/notifications          [ { "notification_id":"…", "is_read":true } ]
+DELETE …/profile/notifications/{id}
+DELETE …/profile/notifications          [ "id1","id2" ]
+```
+
+The legacy per-appliance notification routes are no longer provided by the API; the node now serves them from this account-wide endpoint (filtered by `appliance_id`), so the `notifications` field of a normal poll keeps working. See the example flow [**notifications**](examples/notifications.json).
+
 ### Outputs
 `msg.payload` is replaced with an object containing the following fields:
 

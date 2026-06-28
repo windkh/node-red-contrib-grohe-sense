@@ -260,6 +260,68 @@ class OndusSession {
             });
     }
 
+    put(url, data) {
+        let session = this;
+        return new Promise(function (resolve, reject) {
+            superagent
+                .put(url)
+                .set('Content-Type', 'application/json')
+                .set('Authorization', 'Bearer ' + session.accessToken)
+                .set('accept', 'json')
+                .send(data)
+                .end((error, response) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(response);
+                    }
+                });
+            });
+    }
+
+    patch(url, data) {
+        let session = this;
+        return new Promise(function (resolve, reject) {
+            superagent
+                .patch(url)
+                .set('Content-Type', 'application/json')
+                .set('Authorization', 'Bearer ' + session.accessToken)
+                .set('accept', 'json')
+                .send(data)
+                .end((error, response) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(response);
+                    }
+                });
+            });
+    }
+
+    del(url, data) {
+        let session = this;
+        return new Promise(function (resolve, reject) {
+            let request = superagent
+                .del(url)
+                .set('Content-Type', 'application/json')
+                .set('Authorization', 'Bearer ' + session.accessToken)
+                .set('accept', 'json');
+
+            // The bulk delete needs a body (a JSON array of ids).
+            if (data !== undefined) {
+                request = request.send(data);
+            }
+
+            request.end((error, response) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(response);
+                }
+            });
+            });
+    }
+
     //// yyyy-MM-dd works, too but is not as precise
     getDateTimeString(date) {
         let iso = date.toISOString();
@@ -291,14 +353,97 @@ class OndusSession {
         return this.get(url);
     }
 
-    getApplianceNotifications(locationId, roomId, applianceId) {
-        let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/notifications';
+    // Account-wide notifications --------------------------------------------------
+
+    // GET /profile/notifications?pageSize=&continuationToken=  -> ProfileNotificationsPage
+    getNotifications(pageSize, continuationToken) {
+        let url = apiUrl + '/profile/notifications';
+        let q = [];
+        if (pageSize) {
+            q.push('pageSize=' + pageSize);
+        }
+        if (continuationToken) {
+            q.push('continuationToken=' + encodeURIComponent(continuationToken));
+        }
+        if (q.length) {
+            url += '?' + q.join('&');
+        }
         return this.get(url);
     }
 
-    getApplianceNotificationId(locationId, roomId, applianceId, notificationId) {
-        let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/notifications/' + notificationId;
-        return this.get(url);
+    // Convenience: follows continuationToken to the end and returns the merged
+    // notifications array. Capped at maxPages to avoid runaway calls.
+    async getAllNotifications(pageSize) {
+        let size = pageSize || 50;
+        let maxPages = 20;
+        let all = [];
+        let continuationToken;
+
+        for (let page = 0; page < maxPages; page++) {
+            let response = await this.getNotifications(size, continuationToken);
+            let parsed = JSON.parse(response.text);
+
+            if (parsed && Array.isArray(parsed.notifications)) {
+                all = all.concat(parsed.notifications);
+            }
+
+            continuationToken = parsed ? parsed.continuationToken : undefined;
+            if (!continuationToken) {
+                break;
+            }
+        }
+
+        return all;
+    }
+
+    // GET /profile/notifications/{id}  -> ProfileNotification
+    getNotification(notificationId) {
+        return this.get(apiUrl + '/profile/notifications/' + notificationId);
+    }
+
+    // PUT /profile/notifications/{id}  with the ProfileNotification, is_read = true.
+    // If the notification object is not supplied it is fetched first.
+    async markNotificationRead(notificationId, notification) {
+        let body = notification;
+        if (body === undefined) {
+            let response = await this.getNotification(notificationId);
+            body = JSON.parse(response.text);
+        }
+        body.is_read = true;
+        return this.put(apiUrl + '/profile/notifications/' + notificationId, body);
+    }
+
+    // PATCH /profile/notifications  with [ { notification_id, is_read:true }, ... ]
+    markNotificationsRead(notifications) {
+        return this.patch(apiUrl + '/profile/notifications', notifications);
+    }
+
+    // DELETE /profile/notifications/{id}
+    deleteNotification(notificationId) {
+        return this.del(apiUrl + '/profile/notifications/' + notificationId);
+    }
+
+    // DELETE /profile/notifications  with [ "id1", "id2", ... ]
+    deleteNotifications(notificationIds) {
+        return this.del(apiUrl + '/profile/notifications', notificationIds);
+    }
+
+    // LEGACY: per-appliance notifications route is no longer provided by the API.
+    // Kept for backward compatibility; implemented via the account-wide getNotifications + appliance_id filter.
+    async getApplianceNotifications(locationId, roomId, applianceId) {
+        let all = await this.getAllNotifications();
+        let filtered = all.filter(function (n) { return n.appliance_id === applianceId; });
+        return { text: JSON.stringify(filtered) };
+    }
+
+    // LEGACY: per-appliance notification route is no longer provided by the API.
+    // Kept for backward compatibility; implemented via the account-wide getNotifications + appliance_id / notification_id filter.
+    async getApplianceNotificationId(locationId, roomId, applianceId, notificationId) {
+        let all = await this.getAllNotifications();
+        let match = all.filter(function (n) {
+            return n.appliance_id === applianceId && n.notification_id === notificationId;
+        });
+        return { text: JSON.stringify(match.length > 0 ? match[0] : null) };
     }
 
     getApplianceData(locationId, roomId, applianceId, fromDate, toDate, groupBy) {
@@ -393,6 +538,17 @@ function logoff(session) {
 }
 
 function convertNotification(notification) {
+    // Account-wide ProfileNotification already carries human-readable text
+    // (title / description), so use it directly instead of the numeric mapping.
+    if (notification && notification.notification_id !== undefined) {
+        return {
+            category: notification.category,
+            type: notification.notification_type,
+            message: notification.description || notification.title || '',
+            notification: notification,
+        };
+    }
+
     // credits: https://github.com/faune/homebridge-grohe-sense/blob/master/src/ondusNotification.ts
     // credits: https://github.com/FlorianSW/grohe-ondus-api-java/blob/master/src/main/java/io/github/floriansw/ondus/api/model/Notification.java
     let notificationMessageByCategoryAndType = {
