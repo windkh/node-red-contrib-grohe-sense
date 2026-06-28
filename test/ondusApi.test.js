@@ -78,6 +78,105 @@ describe('lib/ondusApi', function () {
         });
     });
 
+    describe('account-wide notifications', function () {
+        // Builds a session whose http verbs just record the call instead of hitting the network.
+        function spySession(getResponses) {
+            const session = new ondusApi.OndusSession();
+            const calls = [];
+            let getIndex = 0;
+            session.get = (url) => {
+                calls.push({ verb: 'GET', url: url });
+                const body = getResponses ? getResponses[getIndex++] : { notifications: [], continuationToken: null };
+                return Promise.resolve({ text: JSON.stringify(body) });
+            };
+            session.put = (url, data) => { calls.push({ verb: 'PUT', url: url, data: data }); return Promise.resolve({}); };
+            session.patch = (url, data) => { calls.push({ verb: 'PATCH', url: url, data: data }); return Promise.resolve({}); };
+            session.del = (url, data) => { calls.push({ verb: 'DELETE', url: url, data: data }); return Promise.resolve({}); };
+            return { session: session, calls: calls };
+        }
+
+        it('getNotifications builds the paginated query string', function () {
+            const { session, calls } = spySession();
+            session.getNotifications(50, 'abc');
+            assert.strictEqual(calls.length, 1);
+            assert.ok(/\/profile\/notifications\?pageSize=50&continuationToken=abc$/.test(calls[0].url), calls[0].url);
+        });
+
+        it('getNotifications omits the query when no params are given', function () {
+            const { session, calls } = spySession();
+            session.getNotifications();
+            assert.ok(/\/profile\/notifications$/.test(calls[0].url), calls[0].url);
+        });
+
+        it('getAllNotifications follows continuationToken and merges, stopping when empty', async function () {
+            const { session, calls } = spySession([
+                { notifications: [{ notification_id: '1' }], continuationToken: 'p2' },
+                { notifications: [{ notification_id: '2' }], continuationToken: null },
+            ]);
+            const all = await session.getAllNotifications();
+            assert.deepStrictEqual(all.map((n) => n.notification_id), ['1', '2']);
+            assert.strictEqual(calls.length, 2);
+            assert.ok(/continuationToken=p2$/.test(calls[1].url), calls[1].url);
+        });
+
+        it('getAllNotifications respects the page cap', async function () {
+            // Always returns a token -> would loop forever without the cap.
+            const session = new ondusApi.OndusSession();
+            let pages = 0;
+            session.get = () => {
+                pages++;
+                return Promise.resolve({ text: JSON.stringify({ notifications: [{ notification_id: 'x' }], continuationToken: 'next' }) });
+            };
+            const all = await session.getAllNotifications();
+            assert.strictEqual(pages, 20);
+            assert.strictEqual(all.length, 20);
+        });
+
+        it('markNotificationRead PUTs the notification with is_read true', async function () {
+            const { session, calls } = spySession([{ notification_id: 'n1', is_read: false, title: 't' }]);
+            await session.markNotificationRead('n1');
+            const put = calls.find((c) => c.verb === 'PUT');
+            assert.ok(/\/profile\/notifications\/n1$/.test(put.url), put.url);
+            assert.strictEqual(put.data.is_read, true);
+            assert.strictEqual(put.data.notification_id, 'n1');
+        });
+
+        it('markNotificationsRead PATCHes the array', function () {
+            const { session, calls } = spySession();
+            session.markNotificationsRead([{ notification_id: 'a', is_read: true }, { notification_id: 'b', is_read: true }]);
+            const patch = calls.find((c) => c.verb === 'PATCH');
+            assert.ok(/\/profile\/notifications$/.test(patch.url), patch.url);
+            assert.ok(Array.isArray(patch.data));
+            assert.strictEqual(patch.data.length, 2);
+        });
+
+        it('deleteNotification DELETEs by id (no body)', function () {
+            const { session, calls } = spySession();
+            session.deleteNotification('n9');
+            const del = calls.find((c) => c.verb === 'DELETE');
+            assert.ok(/\/profile\/notifications\/n9$/.test(del.url), del.url);
+            assert.strictEqual(del.data, undefined);
+        });
+
+        it('deleteNotifications DELETEs with a JSON-array body', function () {
+            const { session, calls } = spySession();
+            session.deleteNotifications(['a', 'b']);
+            const del = calls.find((c) => c.verb === 'DELETE');
+            assert.ok(/\/profile\/notifications$/.test(del.url), del.url);
+            assert.deepStrictEqual(del.data, ['a', 'b']);
+        });
+
+        it('legacy getApplianceNotifications returns account notifications filtered by appliance_id', async function () {
+            const { session } = spySession([
+                { notifications: [{ notification_id: '1', appliance_id: 'A' }, { notification_id: '2', appliance_id: 'B' }], continuationToken: null },
+            ]);
+            const response = await session.getApplianceNotifications('l', 'r', 'A');
+            const parsed = JSON.parse(response.text);
+            assert.strictEqual(parsed.length, 1);
+            assert.strictEqual(parsed[0].appliance_id, 'A');
+        });
+    });
+
     describe('convertNotification', function () {
         it('maps known category and type to a human readable message', function () {
             const notification = { category: 20, type: 11 };

@@ -156,9 +156,20 @@
         <dd>End of the historical range.</dd>
         <dt class="optional">payload.data.groupBy <span class="property-type">string</span></dt>
         <dd>Aggregation granularity: <code>hour</code>, <code>day</code>, <code>week</code>, <code>month</code>, or <code>year</code> (the API expects lower case; input is accepted in any case and lower-cased; <code>hour</code> is the finest). An invalid value is rejected and falls back to <code>day</code>.</dd>
+        <dt class="optional">payload.notifications <span class="property-type">boolean | object</span></dt>
+        <dd>Account-wide notifications (not device specific). <code>true</code> returns all notifications merged across pages on <code>msg.payload.notifications</code>; add <code>payload.applianceId</code> to filter by appliance. An object <code>{ pageSize, continuationToken }</code> returns a single page. Each notification carries its <code>appliance_id</code> / room / location.</dd>
+        <dt class="optional">payload.markRead <span class="property-type">string | array</span></dt>
+        <dd>Mark one notification (id string) or several (array of ids) as read.</dd>
+        <dt class="optional">payload.markAllRead <span class="property-type">boolean</span></dt>
+        <dd><code>true</code> marks every unread notification as read.</dd>
+        <dt class="optional">payload.deleteNotification <span class="property-type">string</span></dt>
+        <dd>Delete one notification by id.</dd>
+        <dt class="optional">payload.deleteNotifications <span class="property-type">array</span></dt>
+        <dd>Delete several notifications (array of ids).</dd>
         <dt class="optional">debug <span class="property-type">boolean</span></dt>
         <dd>If <code>true</code>, the node emits a debug message with the raw API responses.</dd>
     </dl>
+    <p>The old per-appliance notification routes are no longer provided by the API; notifications are now read from the account-wide endpoint (the normal poll still fills <code>notifications</code>, filtered by appliance).</p>
 
     <h3>Outputs</h3>
     <p>The result is placed on <code>msg.payload</code> and contains:</p>

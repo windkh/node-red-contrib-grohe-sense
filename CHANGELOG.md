@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.34.0] [2026-06-28]
+### migrated to account-wide notifications (the per-appliance routes are no longer provided by the API): added getNotifications (paginated) / getAllNotifications / getNotification / markNotificationRead (PUT) / markNotificationsRead (PATCH) / deleteNotification / deleteNotifications, plus put/patch/del session helpers; the node now exposes msg.payload.notifications (true or { pageSize, continuationToken }), markRead, markAllRead, deleteNotification(s); the legacy getApplianceNotifications* are kept but re-implemented on top of the account-wide endpoint (filtered by appliance_id); added a notifications example flow and tests
+
 ## [0.33.0] [2026-06-28]
 ### fully exposed the Sense Guard appliance command: msg.payload.command now accepts the whole documented field set (valve_open, measure_now, pressure_measurement_running, buzzer_on, buzzer_sound_profile, ...), validated and whitelisted; fixed the bug where the entire msg.payload was posted as the command body - the node now builds a correct ApplianceCommand wrapper ({ appliance_id, type, command }, plus optional commandb64) via new ondusApi buildApplianceCommand / sendApplianceCommand helpers; wrong value types are rejected without a POST; the api validates the whole command object, so the node reads the current command and merges the requested change before sending (a partial command like { measure_now: true } no longer fails with Bad Request); added a command example flow and tests
 

@@ -16,9 +16,34 @@ function buildHarness(options) {
     const infoType = options.infoType !== undefined ? options.infoType : 103;
     const devicetype = options.devicetype !== undefined ? options.devicetype : '103';
     const currentCommand = options.currentCommand !== undefined ? options.currentCommand : { valve_open: true };
+    const notifications = options.notifications !== undefined ? options.notifications : [];
 
     const calls = {};
     const session = {
+        getAllNotifications: async () => {
+            calls.getAllNotifications = (calls.getAllNotifications || 0) + 1;
+            return notifications;
+        },
+        getNotifications: async (pageSize, continuationToken) => {
+            calls.getNotifications = { pageSize, continuationToken };
+            return { text: JSON.stringify({ notifications: notifications, continuationToken: null, remainingNotifications: 0 }) };
+        },
+        markNotificationRead: async (notificationId, notification) => {
+            calls.markNotificationRead = { notificationId, notification };
+            return {};
+        },
+        markNotificationsRead: async (list) => {
+            calls.markNotificationsRead = list;
+            return {};
+        },
+        deleteNotification: async (notificationId) => {
+            calls.deleteNotification = notificationId;
+            return {};
+        },
+        deleteNotifications: async (notificationIds) => {
+            calls.deleteNotifications = notificationIds;
+            return {};
+        },
         getApplianceInfo: async () => ({ text: JSON.stringify([{ type: infoType }]) }),
         getApplianceStatus: async () => ({ text: JSON.stringify([]) }),
         getApplianceDetails: async () => ({ text: JSON.stringify({}) }),
@@ -248,6 +273,102 @@ describe('grohe sense node - commands', function () {
 
         assert.deepStrictEqual(harness.calls.sendApplianceCommand.body.command, command);
         assert.strictEqual(harness.errors.length, 0);
+    });
+
+});
+
+describe('grohe sense node - notifications', function () {
+
+    const aggregatedResponse = { appliance_id: 'uuid', type: 103, data: { group_by: 'day', measurement: [], withdrawals: [] } };
+    const sample = [
+        { notification_id: '1', appliance_id: 'a', is_read: false },
+        { notification_id: '2', appliance_id: 'b', is_read: true },
+        { notification_id: '3', appliance_id: 'a', is_read: false },
+    ];
+
+    it('lists all notifications filtered to the node appliance by default', async function () {
+        const harness = buildHarness({ aggregatedResponse, notifications: sample });
+        const msg = { payload: { notifications: true } };
+        await runInput(harness, msg);
+
+        // default appliance id is 'a' (from the mocked findAppliance)
+        assert.deepStrictEqual(msg.payload.notifications.map((n) => n.notification_id), ['1', '3']);
+        assert.strictEqual(harness.calls.getApplianceData, undefined, 'should not run the appliance poll');
+    });
+
+    it('lists all notifications for an explicit applianceId', async function () {
+        const harness = buildHarness({ aggregatedResponse, notifications: sample });
+        const msg = { payload: { notifications: true, applianceId: 'b' } };
+        await runInput(harness, msg);
+        assert.deepStrictEqual(msg.payload.notifications.map((n) => n.notification_id), ['2']);
+    });
+
+    it('returns a single page object for an object argument', async function () {
+        const harness = buildHarness({ aggregatedResponse, notifications: sample });
+        const msg = { payload: { notifications: { pageSize: 50 } } };
+        await runInput(harness, msg);
+
+        assert.strictEqual(harness.calls.getNotifications.pageSize, 50);
+        assert.ok(Array.isArray(msg.payload.notifications.notifications));
+        assert.ok('continuationToken' in msg.payload.notifications);
+    });
+
+    it('marks one notification read via PUT', async function () {
+        const harness = buildHarness({ aggregatedResponse, notifications: sample });
+        const msg = { payload: { markRead: 'n1' } };
+        await runInput(harness, msg);
+        assert.strictEqual(harness.calls.markNotificationRead.notificationId, 'n1');
+        assert.deepStrictEqual(msg.payload.result, { markRead: 'n1' });
+    });
+
+    it('marks several notifications read via PATCH array', async function () {
+        const harness = buildHarness({ aggregatedResponse, notifications: sample });
+        await runInput(harness, { payload: { markRead: ['x', 'y'] } });
+        assert.deepStrictEqual(harness.calls.markNotificationsRead, [
+            { notification_id: 'x', is_read: true },
+            { notification_id: 'y', is_read: true },
+        ]);
+    });
+
+    it('marks all unread read', async function () {
+        const harness = buildHarness({ aggregatedResponse, notifications: sample });
+        const msg = { payload: { markAllRead: true } };
+        await runInput(harness, msg);
+        // ids 1 and 3 are unread
+        assert.deepStrictEqual(harness.calls.markNotificationsRead, [
+            { notification_id: '1', is_read: true },
+            { notification_id: '3', is_read: true },
+        ]);
+        assert.deepStrictEqual(msg.payload.result, { markAllRead: 2 });
+    });
+
+    it('deletes one notification', async function () {
+        const harness = buildHarness({ aggregatedResponse, notifications: sample });
+        const msg = { payload: { deleteNotification: 'n9' } };
+        await runInput(harness, msg);
+        assert.strictEqual(harness.calls.deleteNotification, 'n9');
+        assert.deepStrictEqual(msg.payload.result, { deleted: ['n9'] });
+    });
+
+    it('deletes several notifications', async function () {
+        const harness = buildHarness({ aggregatedResponse, notifications: sample });
+        await runInput(harness, { payload: { deleteNotifications: ['a', 'b'] } });
+        assert.deepStrictEqual(harness.calls.deleteNotifications, ['a', 'b']);
+    });
+
+    it('rejects a malformed markRead without any HTTP call', async function () {
+        const harness = buildHarness({ aggregatedResponse, notifications: sample });
+        await runInput(harness, { payload: { markRead: 5 } });
+        assert.strictEqual(harness.calls.markNotificationRead, undefined);
+        assert.strictEqual(harness.calls.markNotificationsRead, undefined);
+        assert.strictEqual(harness.errors.length, 1);
+    });
+
+    it('rejects a malformed deleteNotifications without any HTTP call', async function () {
+        const harness = buildHarness({ aggregatedResponse, notifications: sample });
+        await runInput(harness, { payload: { deleteNotifications: 'not-an-array' } });
+        assert.strictEqual(harness.calls.deleteNotifications, undefined);
+        assert.strictEqual(harness.errors.length, 1);
     });
 
 });
