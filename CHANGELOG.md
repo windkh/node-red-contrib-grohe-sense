@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.34.1] [2026-06-28]
+### removed the GROHE Blue annotations from the command documentation (README + inline help); this node targets Sense / Sense Guard (functional Blue notification texts are unchanged)
+
 ## [0.34.0] [2026-06-28]
 ### migrated to account-wide notifications (the per-appliance routes are no longer provided by the API): added getNotifications (paginated) / getAllNotifications / getNotification / markNotificationRead (PUT) / markNotificationsRead (PATCH) / deleteNotification / deleteNotifications, plus put/patch/del session helpers; the node now exposes msg.payload.notifications (true or { pageSize, continuationToken }), markRead, markAllRead, deleteNotification(s); the legacy getApplianceNotifications* are kept but re-implemented on top of the account-wide endpoint (filtered by appliance_id); added a notifications example flow and tests
 
