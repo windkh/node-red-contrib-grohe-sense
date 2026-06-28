@@ -100,6 +100,16 @@ Any incoming message triggers a poll. The optional fields on `msg.payload` contr
 | `payload.data.groupBy` | string | no | Aggregation granularity: `hour`, `day`, or `week`. |
 | `msg.debug` | boolean | no | If `true`, the raw API responses are emitted as a debug warning. |
 
+### Polling & rate limits
+The Grohe Ondus cloud is **rate limited**: more than ~1000 requests within 24&nbsp;h to a single endpoint (e.g. `/dashboard`) get that endpoint **blocked for 24&nbsp;h**, which then surfaces as `Caught exception: Forbidden` (HTTP 403). Each trigger of this node makes several requests (info, status, details, notifications, and — for Sense Guard — command), so an `inject` node firing too often will exhaust the budget quickly. (see [#24](https://github.com/windkh/node-red-contrib-grohe-sense/issues/24))
+
+There is **no push/notification mechanism** — to react to notifications (e.g. a leak alarm or a closed valve) you have to poll. Pick the polling interval with the device's own update cadence and the rate limit in mind:
+
+- A **Sense Guard** uploads its measurements every **~15 minutes**, so polling more often than that yields no new data. Polling **every 15 minutes** (≈96 requests/endpoint/day) is a safe default.
+- A **Sense** uploads only **once a day**, so polling it a few times a day is plenty.
+- **Alarms and valve interactions** are communicated to the cloud immediately by the device, but since this integration only polls, the shortest interval at which you could still catch them without risking the limit is roughly **once every 1–2 minutes per appliance** — and only if that is the *only* thing triggering the node. If you want fast alarm reaction, dedicate a node to it and keep all other polling slow.
+- Avoid wiring several `inject`/poll paths to the same appliance; each one multiplies the request count against the same endpoints.
+
 ### Outputs
 `msg.payload` is replaced with an object containing the following fields:
 
