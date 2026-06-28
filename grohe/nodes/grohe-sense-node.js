@@ -29,6 +29,39 @@ function describeHttpError(prefix, exception) {
     return prefix + ': ' + exception.message + (detail ? ' - ' + detail : '');
 }
 
+// Expected value type per appliance command field. (full command set)
+const COMMAND_FIELD_TYPES = {
+    valve_open: 'boolean',
+    measure_now: 'boolean',
+    get_current_measurement: 'boolean',
+    buzzer_on: 'boolean',
+    buzzer_sound_profile: 'number',
+    cleaning_mode: 'boolean',
+    co2_status_reset: 'boolean',
+    filter_status_reset: 'boolean',
+    temp_user_unlock_on: 'boolean',
+    pressure_measurement_running: 'boolean',
+    reason_for_change: 'number',
+};
+
+// Splits a command object into unknown keys (to ignore) and type errors (to reject).
+function validateCommand(command) {
+    let ignored = [];
+    let typeErrors = [];
+
+    for (let key of Object.keys(command)) {
+        let expected = COMMAND_FIELD_TYPES[key];
+        if (expected === undefined) {
+            ignored.push(key);
+        }
+        else if (typeof command[key] !== expected) {
+            typeErrors.push(key + ' must be a ' + expected);
+        }
+    }
+
+    return { ignored: ignored, typeErrors: typeErrors };
+}
+
 module.exports = function (RED) {
     function GroheSenseNode(config) {
         RED.nodes.createNode(this, config);
@@ -110,14 +143,49 @@ module.exports = function (RED) {
 
                     if (node.devicetype === ondusApi.OndusType.SenseGuard) {
                         if (msg.payload !== undefined && msg.payload.command !== undefined) {
-                            let data = msg.payload;
-                            data.type = node.devicetype;
-                            await node.config.session.setApplianceCommand(
-                                node.applianceIds.locationId,
-                                node.applianceIds.roomId,
-                                node.applianceIds.applianceId,
-                                data);
-                            // Hint: response is not used right now.
+                            let command = msg.payload.command;
+                            let validation = validateCommand(command);
+
+                            if (validation.typeErrors.length > 0) {
+                                node.error('Grohe Sense: invalid command field(s): ' + validation.typeErrors.join('; ') + '. Command not sent.', msg);
+                            }
+                            else {
+                                if (validation.ignored.length > 0) {
+                                    node.warn('Grohe Sense: ignoring unknown command field(s): ' + validation.ignored.join(', ') + '.');
+                                }
+
+                                // The api validates the whole command object (anyOf / select
+                                // schema) and requires the full field set, not just the changed
+                                // field. So read the current command and merge the requested
+                                // changes onto it before sending the complete object.
+                                let currentCommand = {};
+                                try {
+                                    let currentResponse = await node.config.session.getApplianceCommand(
+                                        node.applianceIds.locationId,
+                                        node.applianceIds.roomId,
+                                        node.applianceIds.applianceId);
+                                    let parsedCurrent = JSON.parse(currentResponse.text);
+                                    if (parsedCurrent != null && parsedCurrent.command != null) {
+                                        currentCommand = parsedCurrent.command;
+                                    }
+                                }
+                                catch (exception) {
+                                    node.warn(describeHttpError('Grohe Sense: could not read current command, sending only the requested fields', exception));
+                                }
+
+                                let mergedCommand = Object.assign({}, currentCommand, command);
+
+                                // Build a correct ApplianceCommand wrapper (appliance_id, type,
+                                // whitelisted command) instead of posting the whole payload. (full command set)
+                                await node.config.session.sendApplianceCommand(
+                                    node.applianceIds.locationId,
+                                    node.applianceIds.roomId,
+                                    node.applianceIds.applianceId,
+                                    node.devicetype,
+                                    mergedCommand,
+                                    msg.payload.commandb64);
+                                // Hint: response is not used right now.
+                            }
                         }
                     }
 

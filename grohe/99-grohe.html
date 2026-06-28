@@ -137,7 +137,19 @@
     <p>Any incoming message triggers an update. The contents of <code>msg.payload</code> select optional behaviour:</p>
     <dl class="message-properties">
         <dt class="optional">payload.command <span class="property-type">object</span></dt>
-        <dd>Only for Sense Guard (type 103). Sent verbatim to the Grohe API. Example: <code>{ command: { valve_open: true } }</code> to open the valve, <code>false</code> to close it.</dd>
+        <dd>Only for Sense Guard (type 103). An object of command fields; only whitelisted, correctly-typed fields are accepted. You only need to set the field(s) you want to change &ndash; the node reads the current command, merges your changes, and sends the complete object as <code>{ appliance_id, type, command }</code> (the API validates the whole command object). Example: <code>{ command: { valve_open: true } }</code>.
+            <ul>
+                <li><code>valve_open</code> (bool) &ndash; open / close the main valve</li>
+                <li><code>measure_now</code> (bool) &ndash; take a reading now</li>
+                <li><code>pressure_measurement_running</code> (bool)</li>
+                <li><code>buzzer_on</code> (bool), <code>buzzer_sound_profile</code> (int)</li>
+                <li><code>get_current_measurement</code> (bool)</li>
+                <li><code>cleaning_mode</code>, <code>co2_status_reset</code>, <code>filter_status_reset</code>, <code>temp_user_unlock_on</code> (bool, GROHE Blue)</li>
+                <li><code>reason_for_change</code> (int, optional metadata)</li>
+            </ul>
+            A wrong value type is rejected and nothing is sent.</dd>
+        <dt class="optional">payload.commandb64 <span class="property-type">string</span></dt>
+        <dd>Optional base64 command blob, passed through only when present.</dd>
         <dt class="optional">payload.data.from <span class="property-type">Date | number</span></dt>
         <dd>Start of the historical range (ISO date or milliseconds).</dd>
         <dt class="optional">payload.data.to <span class="property-type">Date | number</span></dt>

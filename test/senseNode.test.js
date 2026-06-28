@@ -5,6 +5,7 @@ const path = require('path');
 const EventEmitter = require('events');
 
 const senseNodeModule = require(path.join('..', 'grohe', 'nodes', 'grohe-sense-node'));
+const ondusApi = require(path.join('..', 'grohe', 'lib', 'ondusApi'));
 
 // Builds a GROHE Sense node instance wired to a mocked config node / session so the
 // input handler can be exercised without any network access.
@@ -13,6 +14,8 @@ function buildHarness(options) {
 
     const aggregatedResponse = options.aggregatedResponse;
     const infoType = options.infoType !== undefined ? options.infoType : 103;
+    const devicetype = options.devicetype !== undefined ? options.devicetype : '103';
+    const currentCommand = options.currentCommand !== undefined ? options.currentCommand : { valve_open: true };
 
     const calls = {};
     const session = {
@@ -24,8 +27,18 @@ function buildHarness(options) {
             calls.getApplianceData = { fromDate, toDate, groupBy };
             return { text: JSON.stringify(aggregatedResponse) };
         },
-        getApplianceCommand: async () => ({ text: JSON.stringify({ command: { valve_open: true } }) }),
-        setApplianceCommand: async () => ({}),
+        getApplianceCommand: async () => ({ text: JSON.stringify({ command: currentCommand }) }),
+        setApplianceCommand: async (locationId, roomId, applianceId, data) => {
+            calls.setApplianceCommand = { locationId, roomId, applianceId, data };
+            return {};
+        },
+        // Capture using the real builder so the actual posted body is asserted.
+        sendApplianceCommand: async (locationId, roomId, applianceId, type, command, commandb64) => {
+            const body = ondusApi.OndusSession.prototype.buildApplianceCommand.call(
+                session, applianceId, type, command, commandb64);
+            calls.sendApplianceCommand = { locationId, roomId, applianceId, type, command, commandb64, body };
+            return {};
+        },
     };
 
     const configNode = {
@@ -55,15 +68,17 @@ function buildHarness(options) {
 
     const node = new EventEmitter();
     const errors = [];
+    const warnings = [];
     const sent = [];
 
-    ctor.call(node, { location: 'cfg', room: 'Wasserkeller', appliance: 'SenseGuard', devicetype: '103' });
+    ctor.call(node, { location: 'cfg', room: 'Wasserkeller', appliance: 'SenseGuard', devicetype: devicetype });
 
     // createNode set noop defaults; override to capture after construction.
     node.error = (message) => { errors.push(message); };
+    node.warn = (message) => { warnings.push(message); };
     node.send = (messages) => { sent.push(messages); };
 
-    return { node, calls, errors, sent };
+    return { node, calls, errors, warnings, sent };
 }
 
 async function runInput(harness, msg) {
@@ -142,6 +157,97 @@ describe('grohe sense node - aggregated data', function () {
         assert.ok(/invalid groupBy/i.test(harness.errors[0]));
         // The flow still completed and produced output.
         assert.ok(harness.sent.length === 1);
+    });
+
+});
+
+describe('grohe sense node - commands', function () {
+
+    const aggregatedResponse = { appliance_id: 'uuid', type: 103, data: { group_by: 'day', measurement: [], withdrawals: [] } };
+
+    it('sends a correct ApplianceCommand wrapper for valve_open', async function () {
+        const harness = buildHarness({ aggregatedResponse });
+        await runInput(harness, { payload: { command: { valve_open: true } } });
+
+        assert.ok(harness.calls.sendApplianceCommand, 'sendApplianceCommand should be called');
+        assert.deepStrictEqual(harness.calls.sendApplianceCommand.body, {
+            appliance_id: 'a',
+            type: 103,
+            command: { valve_open: true },
+        });
+        assert.strictEqual(harness.errors.length, 0);
+    });
+
+    it('does not leak unrelated payload fields into the body (old bug fixed)', async function () {
+        const harness = buildHarness({ aggregatedResponse });
+        await runInput(harness, { payload: { command: { valve_open: true }, data: { from: 'x', to: 'y' }, debug: false } });
+
+        const body = harness.calls.sendApplianceCommand.body;
+        assert.deepStrictEqual(body.command, { valve_open: true });
+        assert.ok(!('data' in body), 'data must not leak into the command body');
+        assert.ok(!('debug' in body));
+    });
+
+    it('passes commandb64 through only when supplied', async function () {
+        const harness = buildHarness({ aggregatedResponse });
+        await runInput(harness, { payload: { command: { valve_open: true }, commandb64: 'Zm9v' } });
+        assert.strictEqual(harness.calls.sendApplianceCommand.body.commandb64, 'Zm9v');
+    });
+
+    it('ignores unknown command keys (warns, still sends)', async function () {
+        const harness = buildHarness({ aggregatedResponse });
+        await runInput(harness, { payload: { command: { valve_open: true, hacker: 'x' } } });
+
+        assert.deepStrictEqual(harness.calls.sendApplianceCommand.body.command, { valve_open: true });
+        assert.ok(harness.warnings.some((w) => /unknown command field/i.test(w)));
+        assert.strictEqual(harness.errors.length, 0);
+    });
+
+    it('rejects a bad value type without sending any command (no POST)', async function () {
+        const harness = buildHarness({ aggregatedResponse });
+        await runInput(harness, { payload: { command: { valve_open: 'yes please' } } });
+
+        assert.strictEqual(harness.calls.sendApplianceCommand, undefined, 'no command should be sent');
+        assert.strictEqual(harness.calls.setApplianceCommand, undefined);
+        assert.strictEqual(harness.errors.length, 1);
+        assert.ok(/valve_open must be a boolean/i.test(harness.errors[0]));
+    });
+
+    it('does not send a command for a non-Guard device', async function () {
+        const harness = buildHarness({ aggregatedResponse, devicetype: '101', infoType: 101 });
+        await runInput(harness, { payload: { command: { valve_open: true } } });
+
+        assert.strictEqual(harness.calls.sendApplianceCommand, undefined);
+        assert.strictEqual(harness.calls.setApplianceCommand, undefined);
+    });
+
+    it('merges the requested change onto the current command (full object sent)', async function () {
+        const harness = buildHarness({
+            aggregatedResponse,
+            currentCommand: { valve_open: true, measure_now: false, pressure_measurement_running: false, buzzer_on: false, buzzer_sound_profile: 2, reason_for_change: 1 },
+        });
+        await runInput(harness, { payload: { command: { measure_now: true } } });
+
+        // Only measure_now changes; all other current fields are preserved so the
+        // api's full-object schema is satisfied.
+        assert.deepStrictEqual(harness.calls.sendApplianceCommand.body.command, {
+            valve_open: true,
+            measure_now: true,
+            pressure_measurement_running: false,
+            buzzer_on: false,
+            buzzer_sound_profile: 2,
+            reason_for_change: 1,
+        });
+        assert.strictEqual(harness.errors.length, 0);
+    });
+
+    it('accepts the full documented command field set', async function () {
+        const harness = buildHarness({ aggregatedResponse });
+        const command = { valve_open: false, measure_now: true, pressure_measurement_running: false, buzzer_on: true, buzzer_sound_profile: 2 };
+        await runInput(harness, { payload: { command: command } });
+
+        assert.deepStrictEqual(harness.calls.sendApplianceCommand.body.command, command);
+        assert.strictEqual(harness.errors.length, 0);
     });
 
 });

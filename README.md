@@ -94,7 +94,8 @@ Any incoming message triggers a poll. The optional fields on `msg.payload` contr
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `payload.command` | object | no | Only honoured for Sense Guard (type `103`). Sent verbatim to the Ondus API. Example: `{ command: { valve_open: true } }`. |
+| `payload.command` | object | no | Only honoured for Sense Guard (type `103`). An object of command fields (see *Sending commands*). Only whitelisted, correctly-typed fields are sent. Example: `{ valve_open: true }`. |
+| `payload.commandb64` | string | no | Optional base64 command blob, passed through only when present. |
 | `payload.data.from` | Date \| number | no | Start of the historical range (Date object or milliseconds). |
 | `payload.data.to` | Date \| number | no | End of the historical range. |
 | `payload.data.groupBy` | string | no | Aggregation granularity: `hour`, `day`, `week`, `month`, or `year` (the API expects lower case; input is accepted in any case and lower-cased; `hour` is the finest). An invalid value is rejected and falls back to `day`. |
@@ -109,6 +110,38 @@ There is **no push/notification mechanism** — to react to notifications (e.g. 
 - A **Sense** uploads only **once a day**, so polling it a few times a day is plenty.
 - **Alarms and valve interactions** are communicated to the cloud immediately by the device, but since this integration only polls, the shortest interval at which you could still catch them without risking the limit is roughly **once every 1–2 minutes per appliance** — and only if that is the *only* thing triggering the node. If you want fast alarm reaction, dedicate a node to it and keep all other polling slow.
 - Avoid wiring several `inject`/poll paths to the same appliance; each one multiplies the request count against the same endpoints.
+
+### Sending commands
+**Sense Guard only (type `103`).** Put the command fields on `msg.payload.command`; the node validates them, drops unknown keys, and builds the correct request body — `{ appliance_id, type, command }` (plus `commandb64` if you supplied one). You only need to set the field(s) you want to change: the API validates the command object as a whole and requires the complete field set, so the node first reads the current command and **merges** your changes onto it before sending the full object.
+
+```js
+msg.payload = { command: { valve_open: true } };                                   // open the main valve
+msg.payload = { command: { valve_open: false, buzzer_on: true, buzzer_sound_profile: 2 } };
+msg.payload = { command: { measure_now: true } };                                  // take a reading now
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `valve_open` | bool | Open / close the main valve (Sense Guard). |
+| `measure_now` | bool | Take a reading now (Sense Guard). |
+| `pressure_measurement_running` | bool | Sense Guard. |
+| `buzzer_on` | bool | Sense / Sense Guard. |
+| `buzzer_sound_profile` | int | Sense / Sense Guard. |
+| `get_current_measurement` | bool | Shared. |
+| `cleaning_mode` | bool | GROHE Blue. |
+| `co2_status_reset` | bool | GROHE Blue. |
+| `filter_status_reset` | bool | GROHE Blue. |
+| `temp_user_unlock_on` | bool | GROHE Blue. |
+| `reason_for_change` | int | Shared, optional metadata. |
+
+A wrong value type (e.g. `valve_open: "yes"`) is rejected with a `node.error` and nothing is sent. The underlying REST call:
+
+```
+POST …/appliances/{applianceId}/command
+{ "appliance_id": "…", "type": 103, "command": { "valve_open": true } }
+```
+
+See the example flow [**senseguardcommand**](examples/senseguardcommand.json).
 
 ### Outputs
 `msg.payload` is replaced with an object containing the following fields:

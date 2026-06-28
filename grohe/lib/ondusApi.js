@@ -15,6 +15,12 @@ let refreshUrl = apiUrl + '/oidc/refresh';
 let actionPattern = "action=\"([^\"]*)\"";
 let actionPrefix = "action=";
 
+// Allowed command keys (snake_case) of the ApplianceCommand.command object.
+// Used to validate / whitelist caller input before sending. (full command set)
+const COMMAND_KEYS = ['valve_open', 'measure_now', 'get_current_measurement', 'buzzer_on',
+    'buzzer_sound_profile', 'cleaning_mode', 'co2_status_reset', 'filter_status_reset',
+    'temp_user_unlock_on', 'pressure_measurement_running', 'reason_for_change'];
+
 
 class OndusSession {
     constructor() {
@@ -334,6 +340,36 @@ class OndusSession {
         let url = apiUrl + '/locations/' + locationId + '/rooms/' + roomId + '/appliances/' + applianceId + '/command';
         return this.post(url, data);
     }
+
+    // Builds a correct ApplianceCommand wrapper, whitelisting the command object to
+    // the known COMMAND_KEYS so unrelated fields never leak into the body. (full command set)
+    buildApplianceCommand(applianceId, type, command, commandb64) {
+        let source = command || {};
+        let filtered = {};
+        for (let k of COMMAND_KEYS) {
+            if (source[k] !== undefined) {
+                filtered[k] = source[k];
+            }
+        }
+
+        let body = {
+            appliance_id: applianceId,
+            type: type,
+            command: filtered,
+        };
+
+        if (commandb64 !== undefined) {
+            body.commandb64 = commandb64;
+        }
+
+        return body;
+    }
+
+    // Convenience: builds the ApplianceCommand wrapper then POSTs it.
+    sendApplianceCommand(locationId, roomId, applianceId, type, command, commandb64) {
+        let body = this.buildApplianceCommand(applianceId, type, command, commandb64);
+        return this.setApplianceCommand(locationId, roomId, applianceId, body);
+    }
 };
 
 // Exported Methds
@@ -492,4 +528,6 @@ exports.login = login;
 exports.logoff = logoff;
 exports.convertNotification = convertNotification;
 exports.OndusType = Object.freeze(OndusType);
+exports.COMMAND_KEYS = Object.freeze(COMMAND_KEYS);
+exports.OndusSession = OndusSession;
 

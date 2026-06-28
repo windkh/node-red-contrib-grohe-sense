@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.33.0] [2026-06-28]
+### fully exposed the Sense Guard appliance command: msg.payload.command now accepts the whole documented field set (valve_open, measure_now, pressure_measurement_running, buzzer_on, buzzer_sound_profile, ...), validated and whitelisted; fixed the bug where the entire msg.payload was posted as the command body - the node now builds a correct ApplianceCommand wrapper ({ appliance_id, type, command }, plus optional commandb64) via new ondusApi buildApplianceCommand / sendApplianceCommand helpers; wrong value types are rejected without a POST; the api validates the whole command object, so the node reads the current command and merges the requested change before sending (a partial command like { measure_now: true } no longer fails with Bad Request); added a command example flow and tests
+
 ## [0.32.0] [2026-06-28]
 ### surfaced the aggregated-data arrays as msg.payload.measurements (per-period readings) and msg.payload.withdrawals (per-event draws, both shapes handled), keeping the raw response on msg.payload.data; groupBy is restricted to hour | day | week | month | year (sent in lower case as the api requires, input accepted in any case, falls back to day); errors now include the server response body; added a converters.extractAggregated helper, an aggregated-data example flow, and tests
 
