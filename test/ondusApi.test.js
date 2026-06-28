@@ -21,6 +21,63 @@ describe('lib/ondusApi', function () {
         });
     });
 
+    describe('buildApplianceCommand', function () {
+        const session = new ondusApi.OndusSession();
+
+        it('whitelists command keys and drops unknown ones', function () {
+            const body = session.buildApplianceCommand('app-1', 103, { valve_open: true, hacker: 'x', data: {} });
+            assert.deepStrictEqual(body, {
+                appliance_id: 'app-1',
+                type: 103,
+                command: { valve_open: true },
+            });
+        });
+
+        it('sets appliance_id and type', function () {
+            const body = session.buildApplianceCommand('uuid', 103, { measure_now: true });
+            assert.strictEqual(body.appliance_id, 'uuid');
+            assert.strictEqual(body.type, 103);
+            assert.deepStrictEqual(body.command, { measure_now: true });
+        });
+
+        it('includes commandb64 only when provided', function () {
+            const without = session.buildApplianceCommand('a', 103, { valve_open: true });
+            assert.ok(!('commandb64' in without));
+
+            const with64 = session.buildApplianceCommand('a', 103, { valve_open: true }, 'Zm9v');
+            assert.strictEqual(with64.commandb64, 'Zm9v');
+        });
+
+        it('keeps all documented command fields', function () {
+            const command = {
+                valve_open: true, measure_now: true, pressure_measurement_running: false,
+                buzzer_on: true, buzzer_sound_profile: 2, reason_for_change: 1,
+            };
+            const body = session.buildApplianceCommand('a', 103, command);
+            assert.deepStrictEqual(body.command, command);
+        });
+    });
+
+    describe('sendApplianceCommand', function () {
+        it('POSTs the wrapper to the /command route', function () {
+            const session = new ondusApi.OndusSession();
+            let captured;
+            session.post = function (url, data) {
+                captured = { url: url, data: data };
+                return Promise.resolve({});
+            };
+
+            session.sendApplianceCommand('loc', 'room', 'app', 103, { valve_open: true });
+
+            assert.ok(/\/locations\/loc\/rooms\/room\/appliances\/app\/command$/.test(captured.url), captured.url);
+            assert.deepStrictEqual(captured.data, {
+                appliance_id: 'app',
+                type: 103,
+                command: { valve_open: true },
+            });
+        });
+    });
+
     describe('convertNotification', function () {
         it('maps known category and type to a human readable message', function () {
             const notification = { category: 20, type: 11 };
