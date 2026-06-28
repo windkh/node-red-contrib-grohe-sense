@@ -97,7 +97,7 @@ Any incoming message triggers a poll. The optional fields on `msg.payload` contr
 | `payload.command` | object | no | Only honoured for Sense Guard (type `103`). Sent verbatim to the Ondus API. Example: `{ command: { valve_open: true } }`. |
 | `payload.data.from` | Date \| number | no | Start of the historical range (Date object or milliseconds). |
 | `payload.data.to` | Date \| number | no | End of the historical range. |
-| `payload.data.groupBy` | string | no | Aggregation granularity: `hour`, `day`, or `week`. |
+| `payload.data.groupBy` | string | no | Aggregation granularity: `hour`, `day`, `week`, `month`, or `year` (the API expects lower case; input is accepted in any case and lower-cased; `hour` is the finest). An invalid value is rejected and falls back to `day`. |
 | `msg.debug` | boolean | no | If `true`, the raw API responses are emitted as a debug warning. |
 
 ### Polling & rate limits
@@ -123,8 +123,26 @@ There is **no push/notification mechanism** — to react to notifications (e.g. 
 | `consumption` | object | Sense Guard only: consumption summary (`daily_consumption`, `daily_cost`, `average_daily_consumption`, `average_monthly_consumption`) from `details.data_latest`. |
 | `notifications` | array | Active notifications, each annotated with a human-readable `category` and `message`. |
 | `command` | object | Only for Sense Guard: the current command state (e.g. `valve_open`). |
-| `data` | object | Raw aggregated historical data — only when `payload.data` was specified. |
+| `measurements` | array | Per-period historical readings from the aggregated response — only when `payload.data` was specified (defaults to `[]`). See *Historical data* below. |
+| `withdrawals` | array | Per-event historical water draws from the aggregated response — only when `payload.data` was specified (defaults to `[]`). See *Historical data* below. |
+| `data` | object | Raw aggregated historical data (the full inner content) — only when `payload.data` was specified. Kept for backward compatibility. |
 | `statistics` | object | Pre-computed min/max temperature, humidity, pressure, flow rate, and today/total water consumption derived from `data`. |
+
+### Historical data (measurements & withdrawals)
+When the input carries a `payload.data` range, the node calls the aggregated-data endpoint and surfaces its two arrays directly on the output:
+
+```
+GET …/appliances/{applianceId}/data/aggregated?from=2026-06-01&to=2026-06-28&groupBy=hour
+```
+
+- **`groupBy`** buckets the data by `hour`, `day`, `week`, `month`, or `year`. The API expects these in **lower case**; the node accepts any casing on input and lower-cases it before the call. `hour` is the finest granularity — there is no minute-level option. An unrecognized value is rejected (logged) and falls back to `day`.
+- **`msg.payload.measurements`** — per-period readings. Fields (snake_case, as sent by the API): `date`, `timestamp`, `flowrate`, `pressure`, `temperature`, `temperature_guard`, `humidity`, `battery` (Blue/filter appliances may add `remaining_filter`, `remaining_co2`, `date_of_filter_replacement`, `date_of_co2_replacement`, `date_of_cleaning`). Absent fields are simply omitted by the appliance.
+- **`msg.payload.withdrawals`** — per-event water draws, in one of two shapes (detect by the keys present):
+  - per-event draw: `{ starttime, stoptime, waterconsumption, maxflowrate }`
+  - per-period cost summary: `{ date, waterconsumption, water_cost, energy_cost, hotwater_share }`
+- **`msg.payload.data`** still contains the full raw aggregated response for backward compatibility.
+
+Both arrays default to `[]` when the appliance returns none. See the example flow [**senseguardaggregateddata**](examples/senseguardaggregateddata.json).
 
 ### Status indicator
 The node icon reflects the runtime state: *connecting*, *connected*, *updating*, *ok*, *N notifications*, *disconnected*, *&lt;name&gt; not found*, or *failed*. When the configuration node loses its connection the sense node shows *disconnected* and automatically returns to *connected* once the connection is re-established.

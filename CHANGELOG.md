@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.32.0] [2026-06-28]
+### surfaced the aggregated-data arrays as msg.payload.measurements (per-period readings) and msg.payload.withdrawals (per-event draws, both shapes handled), keeping the raw response on msg.payload.data; groupBy is restricted to hour | day | week | month | year (sent in lower case as the api requires, input accepted in any case, falls back to day); errors now include the server response body; added a converters.extractAggregated helper, an aggregated-data example flow, and tests
+
 ## [0.31.0] [2026-06-27]
 ### the location node now keeps retrying login with exponential backoff (5s..60s) when the internet is unavailable at startup or the connection is later lost (incl. a failed token refresh), and recovers automatically; sense nodes show 'disconnected' and reconnect without stacking duplicate input handlers; added connection log messages - [#20](https://github.com/windkh/node-red-contrib-grohe-sense/issues/20)
 

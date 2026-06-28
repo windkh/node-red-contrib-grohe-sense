@@ -195,6 +195,77 @@ describe('lib/converters', function () {
         });
     });
 
+    describe('normalizeGroupBy / isValidGroupBy', function () {
+        it('lower-cases string values (the api expects lower case)', function () {
+            assert.strictEqual(converters.normalizeGroupBy('HOUR'), 'hour');
+            assert.strictEqual(converters.normalizeGroupBy('Day'), 'day');
+            assert.strictEqual(converters.normalizeGroupBy('month'), 'month');
+        });
+
+        it('passes non-strings through untouched', function () {
+            assert.strictEqual(converters.normalizeGroupBy(undefined), undefined);
+            assert.strictEqual(converters.normalizeGroupBy(null), null);
+        });
+
+        it('accepts hour, day, week, month and year', function () {
+            assert.ok(converters.isValidGroupBy('hour'));
+            assert.ok(converters.isValidGroupBy('day'));
+            assert.ok(converters.isValidGroupBy('week'));
+            assert.ok(converters.isValidGroupBy('month'));
+            assert.ok(converters.isValidGroupBy('year'));
+            assert.ok(!converters.isValidGroupBy('minute'));
+            assert.ok(!converters.isValidGroupBy('HOUR'));
+            assert.ok(!converters.isValidGroupBy(undefined));
+        });
+    });
+
+    describe('extractAggregated', function () {
+        it('returns the inner measurement and withdrawals arrays plus group_by', function () {
+            const response = {
+                appliance_id: 'uuid',
+                type: 103,
+                data: {
+                    group_by: 'HOUR',
+                    measurement: [{ timestamp: 't1', flowrate: 0, pressure: 4.1 }],
+                    withdrawals: [{ starttime: 's', stoptime: 'e', waterconsumption: 6.7, maxflowrate: 8.9 }],
+                },
+            };
+            const result = converters.extractAggregated(response);
+            assert.strictEqual(result.groupBy, 'HOUR');
+            assert.deepStrictEqual(result.measurements, response.data.measurement);
+            assert.deepStrictEqual(result.withdrawals, response.data.withdrawals);
+        });
+
+        it('defaults missing measurement / withdrawals arrays to []', function () {
+            const result = converters.extractAggregated({ data: { group_by: 'DAY' } });
+            assert.deepStrictEqual(result.measurements, []);
+            assert.deepStrictEqual(result.withdrawals, []);
+            assert.strictEqual(result.groupBy, 'DAY');
+        });
+
+        it('tolerates a completely missing data object', function () {
+            assert.deepStrictEqual(converters.extractAggregated({}), { groupBy: undefined, measurements: [], withdrawals: [] });
+            assert.deepStrictEqual(converters.extractAggregated(undefined), { groupBy: undefined, measurements: [], withdrawals: [] });
+        });
+
+        it('preserves both withdrawal shapes (per-event and per-period cost)', function () {
+            const response = {
+                data: {
+                    group_by: 'DAY',
+                    measurement: [],
+                    withdrawals: [
+                        { starttime: '2026-06-01T10:00:00Z', stoptime: '2026-06-01T10:01:00Z', waterconsumption: 6.7, maxflowrate: 8.9 },
+                        { date: '2026-06-01', waterconsumption: 528.9, water_cost: 0.5, energy_cost: 0.2, hotwater_share: 0 },
+                    ],
+                },
+            };
+            const result = converters.extractAggregated(response);
+            assert.strictEqual(result.withdrawals.length, 2);
+            assert.ok('maxflowrate' in result.withdrawals[0]);
+            assert.ok('water_cost' in result.withdrawals[1]);
+        });
+    });
+
     describe('convertConsumption', function () {
         it('extracts the present consumption fields', function () {
             const result = converters.convertConsumption({

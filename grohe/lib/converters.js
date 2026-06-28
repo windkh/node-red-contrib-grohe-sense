@@ -2,10 +2,35 @@
 
 const ondusApi = require('./ondusApi.js');
 
+// The aggregated-data endpoint buckets by one of these values (the api expects them
+// in lower case); hour is the finest (no minute-level option), year the coarsest.
+const VALID_GROUP_BY = ['hour', 'day', 'week', 'month', 'year'];
+
 // check if the input is already a date, if not it is probably a value in milliseconds.
 function convertToDate(input) {
     let date = new Date(input);
     return date;
+}
+
+// Normalizes a groupBy value to the lower-case form the api expects (hour / day / month).
+function normalizeGroupBy(groupBy) {
+    return typeof groupBy === 'string' ? groupBy.toLowerCase() : groupBy;
+}
+
+function isValidGroupBy(groupBy) {
+    return VALID_GROUP_BY.indexOf(groupBy) !== -1;
+}
+
+// Pulls the two useful arrays out of an aggregated-data response. Tolerates the
+// AggregatedData -> data -> { group_by, measurement, withdrawals } nesting and
+// defaults missing arrays to [] so callers never have to null-check. (aggregated data)
+function extractAggregated(parsedResponse) {
+    let content = (parsedResponse && parsedResponse.data) || {};
+    return {
+        groupBy: content.group_by,
+        measurements: Array.isArray(content.measurement) ? content.measurement : [],
+        withdrawals: Array.isArray(content.withdrawals) ? content.withdrawals : [],
+    };
 }
 
 // Converts a status array to a flat object keyed by type.
@@ -257,7 +282,11 @@ function convertNotifications(notifications) {
 }
 
 module.exports = {
+    VALID_GROUP_BY,
     convertToDate,
+    normalizeGroupBy,
+    isValidGroupBy,
+    extractAggregated,
     convertStatus,
     getMin,
     getMax,
