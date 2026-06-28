@@ -128,10 +128,6 @@ msg.payload = { command: { measure_now: true } };                               
 | `buzzer_on` | bool | Sense / Sense Guard. |
 | `buzzer_sound_profile` | int | Sense / Sense Guard. |
 | `get_current_measurement` | bool | Shared. |
-| `cleaning_mode` | bool | GROHE Blue. |
-| `co2_status_reset` | bool | GROHE Blue. |
-| `filter_status_reset` | bool | GROHE Blue. |
-| `temp_user_unlock_on` | bool | GROHE Blue. |
 | `reason_for_change` | int | Shared, optional metadata. |
 
 A wrong value type (e.g. `valve_open: "yes"`) is rejected with a `node.error` and nothing is sent. The underlying REST call:
@@ -199,7 +195,7 @@ GET …/appliances/{applianceId}/data/aggregated?from=2026-06-01&to=2026-06-28&g
 ```
 
 - **`groupBy`** buckets the data by `hour`, `day`, `week`, `month`, or `year`. The API expects these in **lower case**; the node accepts any casing on input and lower-cases it before the call. `hour` is the finest granularity — there is no minute-level option. An unrecognized value is rejected (logged) and falls back to `day`.
-- **`msg.payload.measurements`** — per-period readings. Fields (snake_case, as sent by the API): `date`, `timestamp`, `flowrate`, `pressure`, `temperature`, `temperature_guard`, `humidity`, `battery` (Blue/filter appliances may add `remaining_filter`, `remaining_co2`, `date_of_filter_replacement`, `date_of_co2_replacement`, `date_of_cleaning`). Absent fields are simply omitted by the appliance.
+- **`msg.payload.measurements`** — per-period readings. Fields (snake_case, as sent by the API): `date`, `timestamp`, `flowrate`, `pressure`, `temperature`, `temperature_guard`, `humidity`, `battery`. Absent fields are simply omitted by the appliance.
 - **`msg.payload.withdrawals`** — per-event water draws, in one of two shapes (detect by the keys present):
   - per-event draw: `{ starttime, stoptime, waterconsumption, maxflowrate }`
   - per-period cost summary: `{ date, waterconsumption, water_cost, energy_cost, hotwater_share }`
