@@ -11,6 +11,11 @@
     "engines": {
         "node": ">=7.6.0"
     },
+    "files": [
+        "grohe/",
+        "examples/",
+        "CHANGELOG.md"
+    ],
     "scripts": {
         "lint": "eslint .",
         "test": "mocha --recursive test"
