@@ -1,10 +1,10 @@
 'use strict';
 
-const assert = require('assert');
+const { describe, it } = require('node:test');
+const assert = require('node:assert');
 const path = require('path');
 
 describe('grohe/99-grohe.js entry point', function () {
-
     it('registers both grohe nodes against a stubbed RED runtime', function () {
         const registered = [];
         const RED = {
@@ -22,5 +22,4 @@ describe('grohe/99-grohe.js entry point', function () {
         assert.ok(registered.includes('grohe location'), 'grohe location should be registered');
         assert.ok(registered.includes('grohe sense'), 'grohe sense should be registered');
     });
-
 });

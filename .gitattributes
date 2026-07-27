@@ -1,0 +1,6 @@
+# Prettier writes LF; without this, core.autocrlf=true hands CRLF back on
+# checkout and `npm run format:check` fails locally on Windows.
+* text=auto eol=lf
+
+# Keep binary assets untouched.
+*.png binary

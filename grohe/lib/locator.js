@@ -11,9 +11,9 @@
 //   { error: 'applianceNotFound', availableRooms: [...], availableAppliances: [...] }
 // (#25)
 function findApplianceIds(location, appliancesByRoomName, roomName, applianceName) {
-    let availableRooms = Object.keys(appliancesByRoomName || {});
+    const availableRooms = Object.keys(appliancesByRoomName || {});
 
-    let entry = (appliancesByRoomName || {})[roomName];
+    const entry = (appliancesByRoomName || {})[roomName];
     if (entry === undefined) {
         return {
             error: 'roomNotFound',
@@ -21,11 +21,11 @@ function findApplianceIds(location, appliancesByRoomName, roomName, applianceNam
         };
     }
 
-    let appliances = entry.appliances || [];
-    let room = entry.room || {};
+    const appliances = entry.appliances || [];
+    const room = entry.room || {};
 
     for (let i = 0; i < appliances.length; i++) {
-        let appliance = appliances[i];
+        const appliance = appliances[i];
 
         if (appliance.name === applianceName) {
             return {
@@ -44,7 +44,9 @@ function findApplianceIds(location, appliancesByRoomName, roomName, applianceNam
     return {
         error: 'applianceNotFound',
         availableRooms: availableRooms,
-        availableAppliances: appliances.map(function (a) { return a.name; }),
+        availableAppliances: appliances.map(function (a) {
+            return a.name;
+        }),
     };
 }
 

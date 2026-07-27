@@ -1,6 +1,7 @@
 'use strict';
 
-const assert = require('assert');
+const { describe, it } = require('node:test');
+const assert = require('node:assert');
 const path = require('path');
 const EventEmitter = require('events');
 
@@ -26,7 +27,13 @@ function buildHarness(options) {
         },
         getNotifications: async (pageSize, continuationToken) => {
             calls.getNotifications = { pageSize, continuationToken };
-            return { text: JSON.stringify({ notifications: notifications, continuationToken: null, remainingNotifications: 0 }) };
+            return {
+                text: JSON.stringify({
+                    notifications: notifications,
+                    continuationToken: null,
+                    remainingNotifications: 0,
+                }),
+            };
         },
         markNotificationRead: async (notificationId, notification) => {
             calls.markNotificationRead = { notificationId, notification };
@@ -60,7 +67,12 @@ function buildHarness(options) {
         // Capture using the real builder so the actual posted body is asserted.
         sendApplianceCommand: async (locationId, roomId, applianceId, type, command, commandb64) => {
             const body = ondusApi.OndusSession.prototype.buildApplianceCommand.call(
-                session, applianceId, type, command, commandb64);
+                session,
+                applianceId,
+                type,
+                command,
+                commandb64
+            );
             calls.sendApplianceCommand = { locationId, roomId, applianceId, type, command, commandb64, body };
             return {};
         },
@@ -77,7 +89,9 @@ function buildHarness(options) {
     let ctor;
     const RED = {
         nodes: {
-            registerType: (name, fn) => { ctor = fn; },
+            registerType: (name, fn) => {
+                ctor = fn;
+            },
             createNode: (node) => {
                 node.status = () => {};
                 node.log = () => {};
@@ -99,9 +113,15 @@ function buildHarness(options) {
     ctor.call(node, { location: 'cfg', room: 'Wasserkeller', appliance: 'SenseGuard', devicetype: devicetype });
 
     // createNode set noop defaults; override to capture after construction.
-    node.error = (message) => { errors.push(message); };
-    node.warn = (message) => { warnings.push(message); };
-    node.send = (messages) => { sent.push(messages); };
+    node.error = (message) => {
+        errors.push(message);
+    };
+    node.warn = (message) => {
+        warnings.push(message);
+    };
+    node.send = (messages) => {
+        sent.push(messages);
+    };
 
     return { node, calls, errors, warnings, sent };
 }
@@ -113,7 +133,6 @@ async function runInput(harness, msg) {
 }
 
 describe('grohe sense node - aggregated data', function () {
-
     const aggregatedResponse = {
         appliance_id: 'uuid',
         type: 103,
@@ -124,7 +143,12 @@ describe('grohe sense node - aggregated data', function () {
                 { timestamp: '2026-06-01T11:00:00Z', flowrate: 0.2, pressure: 4.0, temperature_guard: 18.6 },
             ],
             withdrawals: [
-                { starttime: '2026-06-01T10:00:00Z', stoptime: '2026-06-01T10:01:00Z', waterconsumption: 6.7, maxflowrate: 8.9 },
+                {
+                    starttime: '2026-06-01T10:00:00Z',
+                    stoptime: '2026-06-01T10:01:00Z',
+                    waterconsumption: 6.7,
+                    maxflowrate: 8.9,
+                },
                 { date: '2026-06-01', waterconsumption: 528.9, water_cost: 0.5, energy_cost: 0.2, hotwater_share: 0 },
             ],
         },
@@ -157,7 +181,9 @@ describe('grohe sense node - aggregated data', function () {
     });
 
     it('defaults missing measurement / withdrawals arrays to []', async function () {
-        const harness = buildHarness({ aggregatedResponse: { appliance_id: 'uuid', type: 103, data: { group_by: 'DAY' } } });
+        const harness = buildHarness({
+            aggregatedResponse: { appliance_id: 'uuid', type: 103, data: { group_by: 'DAY' } },
+        });
         await runInput(harness, { payload: { data: { from: '2026-06-01', to: '2026-06-28', groupBy: 'DAY' } } });
 
         const payload = harness.sent[0][0].payload;
@@ -183,12 +209,14 @@ describe('grohe sense node - aggregated data', function () {
         // The flow still completed and produced output.
         assert.ok(harness.sent.length === 1);
     });
-
 });
 
 describe('grohe sense node - commands', function () {
-
-    const aggregatedResponse = { appliance_id: 'uuid', type: 103, data: { group_by: 'day', measurement: [], withdrawals: [] } };
+    const aggregatedResponse = {
+        appliance_id: 'uuid',
+        type: 103,
+        data: { group_by: 'day', measurement: [], withdrawals: [] },
+    };
 
     it('sends a correct ApplianceCommand wrapper for valve_open', async function () {
         const harness = buildHarness({ aggregatedResponse });
@@ -205,7 +233,9 @@ describe('grohe sense node - commands', function () {
 
     it('does not leak unrelated payload fields into the body (old bug fixed)', async function () {
         const harness = buildHarness({ aggregatedResponse });
-        await runInput(harness, { payload: { command: { valve_open: true }, data: { from: 'x', to: 'y' }, debug: false } });
+        await runInput(harness, {
+            payload: { command: { valve_open: true }, data: { from: 'x', to: 'y' }, debug: false },
+        });
 
         const body = harness.calls.sendApplianceCommand.body;
         assert.deepStrictEqual(body.command, { valve_open: true });
@@ -249,7 +279,14 @@ describe('grohe sense node - commands', function () {
     it('merges the requested change onto the current command (full object sent)', async function () {
         const harness = buildHarness({
             aggregatedResponse,
-            currentCommand: { valve_open: true, measure_now: false, pressure_measurement_running: false, buzzer_on: false, buzzer_sound_profile: 2, reason_for_change: 1 },
+            currentCommand: {
+                valve_open: true,
+                measure_now: false,
+                pressure_measurement_running: false,
+                buzzer_on: false,
+                buzzer_sound_profile: 2,
+                reason_for_change: 1,
+            },
         });
         await runInput(harness, { payload: { command: { measure_now: true } } });
 
@@ -268,18 +305,26 @@ describe('grohe sense node - commands', function () {
 
     it('accepts the full documented command field set', async function () {
         const harness = buildHarness({ aggregatedResponse });
-        const command = { valve_open: false, measure_now: true, pressure_measurement_running: false, buzzer_on: true, buzzer_sound_profile: 2 };
+        const command = {
+            valve_open: false,
+            measure_now: true,
+            pressure_measurement_running: false,
+            buzzer_on: true,
+            buzzer_sound_profile: 2,
+        };
         await runInput(harness, { payload: { command: command } });
 
         assert.deepStrictEqual(harness.calls.sendApplianceCommand.body.command, command);
         assert.strictEqual(harness.errors.length, 0);
     });
-
 });
 
 describe('grohe sense node - notifications', function () {
-
-    const aggregatedResponse = { appliance_id: 'uuid', type: 103, data: { group_by: 'day', measurement: [], withdrawals: [] } };
+    const aggregatedResponse = {
+        appliance_id: 'uuid',
+        type: 103,
+        data: { group_by: 'day', measurement: [], withdrawals: [] },
+    };
     const sample = [
         { notification_id: '1', appliance_id: 'a', is_read: false },
         { notification_id: '2', appliance_id: 'b', is_read: true },
@@ -292,7 +337,10 @@ describe('grohe sense node - notifications', function () {
         await runInput(harness, msg);
 
         // default appliance id is 'a' (from the mocked findAppliance)
-        assert.deepStrictEqual(msg.payload.notifications.map((n) => n.notification_id), ['1', '3']);
+        assert.deepStrictEqual(
+            msg.payload.notifications.map((n) => n.notification_id),
+            ['1', '3']
+        );
         assert.strictEqual(harness.calls.getApplianceData, undefined, 'should not run the appliance poll');
     });
 
@@ -300,7 +348,10 @@ describe('grohe sense node - notifications', function () {
         const harness = buildHarness({ aggregatedResponse, notifications: sample });
         const msg = { payload: { notifications: true, applianceId: 'b' } };
         await runInput(harness, msg);
-        assert.deepStrictEqual(msg.payload.notifications.map((n) => n.notification_id), ['2']);
+        assert.deepStrictEqual(
+            msg.payload.notifications.map((n) => n.notification_id),
+            ['2']
+        );
     });
 
     it('returns a single page object for an object argument', async function () {
@@ -370,5 +421,4 @@ describe('grohe sense node - notifications', function () {
         assert.strictEqual(harness.calls.deleteNotifications, undefined);
         assert.strictEqual(harness.errors.length, 1);
     });
-
 });

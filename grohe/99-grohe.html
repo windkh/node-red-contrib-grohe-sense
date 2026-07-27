@@ -5,11 +5,11 @@
     RED.nodes.registerType('grohe location', {
         category: 'config',
         defaults: {
-            location: { value: "", required: true },
+            location: { value: '', required: true },
         },
         credentials: {
-            username: { type: "text" },
-			password: { type: "password" },
+            username: { type: 'text' },
+            password: { type: 'password' },
         },
         label: function () {
             return this.location;
@@ -18,25 +18,25 @@
 </script>
 
 <script type="text/x-red" data-template-name="grohe location">
-    <div class="form-row" style="min-width: 700px">
-        <div class="form-row">
-            <label for="node-config-input-location"><i class="fa fa-home"></i> Location</label>
-            <input type="text" id="node-config-input-location" placeholder="(Name of the location to connect to)">
-        </div>
+      <div class="form-row" style="min-width: 700px">
+          <div class="form-row">
+              <label for="node-config-input-location"><i class="fa fa-home"></i> Location</label>
+              <input type="text" id="node-config-input-location" placeholder="(Name of the location to connect to)">
+          </div>
 
-        <hr align="middle"/>
+          <hr align="middle"/>
 
-        <div class="form-row">
-			<label for="node-config-input-username"><i class="fa fa-user"></i> Username</label>
-			<input type="text" id="node-config-input-username" placeholder="Enter the username here">
-		</div>
-		<div class="form-row">
-			<label for="node-config-input-password"><i class="fa fa-key"></i> Password</label>
-			<input type="text" id="node-config-input-password" placeholder="Enter the password here)">
-		</div>
-
-        <hr align="middle"/>
+          <div class="form-row">
+    	<label for="node-config-input-username"><i class="fa fa-user"></i> Username</label>
+    	<input type="text" id="node-config-input-username" placeholder="Enter the username here">
     </div>
+    <div class="form-row">
+    	<label for="node-config-input-password"><i class="fa fa-key"></i> Password</label>
+    	<input type="text" id="node-config-input-password" placeholder="Enter the password here)">
+    </div>
+
+          <hr align="middle"/>
+      </div>
 </script>
 
 <script type="text/x-red" data-help-name="grohe location">
@@ -57,7 +57,6 @@
     <p>If the internet is unavailable at startup, or the connection is later lost (including a failed token refresh), the node keeps retrying the login with exponential backoff (5&nbsp;s up to 60&nbsp;s) and recovers automatically once connectivity returns. Connection attempts, successes and failures are written to the Node-RED log. While disconnected the dependent <code>grohe sense</code> nodes show <i>disconnected</i>.</p>
 </script>
 
-
 <!-- ------------------------------------------------------------------------------------------ -->
 
 <script type="text/javascript">
@@ -65,24 +64,23 @@
         category: 'Grohe Sense',
         color: '#8DCEEB',
         defaults: {
-			location: { value:"", type: "grohe location", required: true },
-            room: { value:"", required: true },
-            appliance: { value:"", required: true },
-            devicetype: { value: "101", required: true },
-            description: { value:"" },
+            location: { value: '', type: 'grohe location', required: true },
+            room: { value: '', required: true },
+            appliance: { value: '', required: true },
+            devicetype: { value: '101', required: true },
+            description: { value: '' },
         },
         inputs: 1,
         outputs: 1,
-        icon: "grohe.png",
-        paletteLabel: "sense",
+        icon: 'grohe.png',
+        paletteLabel: 'sense',
         label: function () {
-            return this.description || this.appliance || "Grohe Sense";
+            return this.description || this.appliance || 'Grohe Sense';
         },
-        labelStyle: function() {
-            return this.description?"node_label_italic":"";
-        }
+        labelStyle: function () {
+            return this.description ? 'node_label_italic' : '';
+        },
     });
-
 </script>
 
 <script type="text/x-red" data-template-name="grohe sense">

@@ -8,7 +8,7 @@ const VALID_GROUP_BY = ['hour', 'day', 'week', 'month', 'year'];
 
 // check if the input is already a date, if not it is probably a value in milliseconds.
 function convertToDate(input) {
-    let date = new Date(input);
+    const date = new Date(input);
     return date;
 }
 
@@ -25,7 +25,7 @@ function isValidGroupBy(groupBy) {
 // AggregatedData -> data -> { group_by, measurement, withdrawals } nesting and
 // defaults missing arrays to [] so callers never have to null-check. (aggregated data)
 function extractAggregated(parsedResponse) {
-    let content = (parsedResponse && parsedResponse.data) || {};
+    const content = (parsedResponse && parsedResponse.data) || {};
     return {
         groupBy: content.group_by,
         measurements: Array.isArray(content.measurement) ? content.measurement : [],
@@ -35,10 +35,10 @@ function extractAggregated(parsedResponse) {
 
 // Converts a status array to a flat object keyed by type.
 function convertStatus(status) {
-    let convertedStatus = {};
+    const convertedStatus = {};
 
     for (let i = 0; i < status.length; i++) {
-        let item = status[i];
+        const item = status[i];
         convertedStatus[item.type] = item.value;
     }
 
@@ -51,8 +51,7 @@ function getMin(newValue, oldValue) {
     }
     if (newValue < oldValue) {
         return newValue;
-    }
-    else {
+    } else {
         return oldValue;
     }
 }
@@ -63,8 +62,7 @@ function getMax(newValue, oldValue) {
     }
     if (newValue > oldValue) {
         return newValue;
-    }
-    else {
+    } else {
         return oldValue;
     }
 }
@@ -81,36 +79,36 @@ function convertMeasurement(measurement) {
     let minPressure = Number.NaN;
     let maxPressure = Number.NaN;
 
-    let length = measurement.length;
+    const length = measurement.length;
     for (let i = 0; i < length; i++) {
-        let item = measurement[i];
+        const item = measurement[i];
 
-        let temperature = item.temperature;
+        const temperature = item.temperature;
         minTemperature = getMin(temperature, minTemperature);
         maxTemperature = getMax(temperature, maxTemperature);
 
-        let temperatureGuard = item.temperature_guard;
+        const temperatureGuard = item.temperature_guard;
         minTemperatureGuard = getMin(temperatureGuard, minTemperatureGuard);
         maxTemperatureGuard = getMax(temperatureGuard, maxTemperatureGuard);
 
-        let humidity = item.humidity;
+        const humidity = item.humidity;
         minHumidity = getMin(humidity, minHumidity);
         maxHumidity = getMax(humidity, maxHumidity);
 
-        let flowrate = item.flowrate;
+        const flowrate = item.flowrate;
         minFlowrate = getMin(flowrate, minFlowrate);
         maxFlowrate = getMax(flowrate, maxFlowrate);
 
-        let pressure = item.pressure;
+        const pressure = item.pressure;
         minPressure = getMin(pressure, minPressure);
         maxPressure = getMax(pressure, maxPressure);
     }
 
-    let from = measurement[0].date;
-    let to = measurement[length - 1].date;
-    let duration = (new Date(from) - new Date(to)) / 1000;
+    const from = measurement[0].date;
+    const to = measurement[length - 1].date;
+    const duration = (new Date(from) - new Date(to)) / 1000;
 
-    let convertedMeasurement = {
+    const convertedMeasurement = {
         from: from,
         to: to,
         duration: duration,
@@ -168,22 +166,22 @@ function convertWithdrawals(withdrawals) {
     let todayHotwaterShare = 0;
     let todayMaxFlowrate = Number.NaN;
 
-    let length = withdrawals.length;
+    const length = withdrawals.length;
     if (length > 0) {
-        let todayDate = withdrawals[0].date;
-        let today = new Date(new Date(todayDate).toDateString());
+        const todayDate = withdrawals[0].date;
+        const today = new Date(new Date(todayDate).toDateString());
 
         for (let i = 0; i < length; i++) {
-            let item = withdrawals[i];
+            const item = withdrawals[i];
 
-            let date = new Date(item.date);
+            const date = new Date(item.date);
             totalWaterConsumption += item.waterconsumption;
             totalWaterCost += item.water_cost;
             totalEnerygCost += item.energy_cost;
             totalHotwaterShare += item.hotwater_share;
             // The changed api renamed the day-grouped field to max_flowrate;
             // data_latest still uses maxflowrate, so accept both. (#26)
-            let flowrate = item.max_flowrate !== undefined ? item.max_flowrate : item.maxflowrate;
+            const flowrate = item.max_flowrate !== undefined ? item.max_flowrate : item.maxflowrate;
             totalMaxFlowrate = getMax(flowrate, totalMaxFlowrate);
 
             if (date >= today) {
@@ -196,7 +194,7 @@ function convertWithdrawals(withdrawals) {
         }
     }
 
-    let convertedWithdrawals = {
+    const convertedWithdrawals = {
         from: withdrawals[0].date,
         to: withdrawals[length - 1].date,
         count: length,
@@ -223,19 +221,19 @@ function convertWithdrawals(withdrawals) {
 
 // Calculates statistics for a measurement data object.
 function convertData(data) {
-    let statistics = {};
+    const statistics = {};
 
-    let measurement = data.measurement;
+    const measurement = data.measurement;
     if (measurement) {
-        let length = measurement.length;
+        const length = measurement.length;
         if (length > 0) {
             statistics.measurement = convertMeasurement(measurement);
         }
     }
 
-    let withdrawals = data.withdrawals;
+    const withdrawals = data.withdrawals;
     if (withdrawals) {
-        let length = withdrawals.length;
+        const length = withdrawals.length;
         if (length > 0) {
             statistics.withdrawals = convertWithdrawals(withdrawals);
         }
@@ -248,17 +246,12 @@ function convertData(data) {
 // details.data_latest (daily / average consumption and cost). Returns undefined
 // when none of the fields are present (e.g. for a Sense device). (#26)
 function convertConsumption(dataLatest) {
-    let fields = [
-        'daily_consumption',
-        'daily_cost',
-        'average_daily_consumption',
-        'average_monthly_consumption',
-    ];
+    const fields = ['daily_consumption', 'daily_cost', 'average_daily_consumption', 'average_monthly_consumption'];
 
-    let consumption = {};
+    const consumption = {};
     let found = false;
     for (let i = 0; i < fields.length; i++) {
-        let field = fields[i];
+        const field = fields[i];
         if (dataLatest[field] !== undefined) {
             consumption[field] = dataLatest[field];
             found = true;
@@ -270,11 +263,11 @@ function convertConsumption(dataLatest) {
 
 // Converts notifications to a notification with text.
 function convertNotifications(notifications) {
-    let convertedNotifications = [];
+    const convertedNotifications = [];
 
     for (let i = 0; i < notifications.length; i++) {
-        let notification = notifications[i];
-        let convertedNotification = ondusApi.convertNotification(notification);
+        const notification = notifications[i];
+        const convertedNotification = ondusApi.convertNotification(notification);
         convertedNotifications.push(convertedNotification);
     }
 

@@ -1,10 +1,10 @@
 'use strict';
 
-const assert = require('assert');
+const { describe, it } = require('node:test');
+const assert = require('node:assert');
 const backoff = require('../grohe/lib/backoff');
 
 describe('lib/backoff', function () {
-
     describe('computeBackoffDelay', function () {
         it('returns the base delay for the first attempt', function () {
             assert.strictEqual(backoff.computeBackoffDelay(0, 5000, 60000), 5000);
@@ -26,5 +26,4 @@ describe('lib/backoff', function () {
             assert.strictEqual(backoff.computeBackoffDelay(NaN, 5000, 60000), 5000);
         });
     });
-
 });

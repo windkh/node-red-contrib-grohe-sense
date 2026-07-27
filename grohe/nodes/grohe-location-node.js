@@ -28,7 +28,7 @@ module.exports = function (RED) {
     function GroheLocationNode(n) {
         RED.nodes.createNode(this, n);
 
-        let node = this;
+        const node = this;
         node.config = n;
         // Trim so accidental leading / trailing whitespace does not silently
         // break the exact name match against the dashboard. (#25)
@@ -40,9 +40,12 @@ module.exports = function (RED) {
         node.reconnectTimer = undefined;
         node.reconnectAttempt = 0;
 
-        let hasCredentials = node.credentials !== undefined
-            && node.credentials.username !== undefined && node.credentials.username !== ''
-            && node.credentials.password !== undefined && node.credentials.password !== '';
+        const hasCredentials =
+            node.credentials !== undefined &&
+            node.credentials.username !== undefined &&
+            node.credentials.username !== '' &&
+            node.credentials.password !== undefined &&
+            node.credentials.password !== '';
 
         // Tear down the current session (e.g. after the connection was lost). (#20)
         node.disconnect = function () {
@@ -62,7 +65,7 @@ module.exports = function (RED) {
                 return;
             }
 
-            let delay = backoff.computeBackoffDelay(node.reconnectAttempt, RECONNECT_BASE_MS, RECONNECT_MAX_MS);
+            const delay = backoff.computeBackoffDelay(node.reconnectAttempt, RECONNECT_BASE_MS, RECONNECT_MAX_MS);
             node.reconnectAttempt++;
             node.log('Grohe: next connection attempt in ' + Math.round(delay / 1000) + 's.');
 
@@ -95,12 +98,15 @@ module.exports = function (RED) {
             let session;
             let dashboard;
             try {
-                session = await ondusApi.login(node.credentials.username, node.credentials.password, node.onRefreshFailed);
+                session = await ondusApi.login(
+                    node.credentials.username,
+                    node.credentials.password,
+                    node.onRefreshFailed
+                );
 
-                let response = await session.getDahsboard();
+                const response = await session.getDahsboard();
                 dashboard = JSON.parse(response.text);
-            }
-            catch (exception) {
+            } catch (exception) {
                 // Connectivity / authentication problem - keep retrying so the node
                 // recovers automatically once the internet is back. (#20)
                 node.connected = false;
@@ -113,7 +119,7 @@ module.exports = function (RED) {
 
             node.session = session;
 
-            let locations = dashboard.locations || [];
+            const locations = dashboard.locations || [];
             let foundLocation;
             for (let i = 0; i < locations.length; i++) {
                 if (locations[i].name === node.locationName) {
@@ -129,8 +135,17 @@ module.exports = function (RED) {
                 node.disconnect();
                 node.emit('initializeFailed', 'location "' + node.locationName + '" not found');
                 node.emit('disconnected');
-                node.warn('Grohe: location "' + node.locationName + '" not found in the account. Available locations: ' +
-                    (locations.map(function (l) { return l.name; }).join(', ') || '(none)') + '.');
+                node.warn(
+                    'Grohe: location "' +
+                        node.locationName +
+                        '" not found in the account. Available locations: ' +
+                        (locations
+                            .map(function (l) {
+                                return l.name;
+                            })
+                            .join(', ') || '(none)') +
+                        '.'
+                );
                 return;
             }
 
@@ -140,10 +155,10 @@ module.exports = function (RED) {
             node.log('Grohe: location ' + foundLocation.name);
 
             for (let j = 0; j < node.rooms.length; j++) {
-                let room = node.rooms[j];
+                const room = node.rooms[j];
                 node.log('Grohe:     room ' + room.name);
 
-                let appliances = room.appliances || [];
+                const appliances = room.appliances || [];
                 node.appliancesByRoomName[room.name] = {
                     room: room,
                     appliances: appliances,
@@ -163,8 +178,7 @@ module.exports = function (RED) {
 
         if (hasCredentials) {
             node.connect();
-        }
-        else {
+        } else {
             // Defer so sense nodes (created after this config node) can subscribe first.
             setImmediate(function () {
                 node.connected = false;

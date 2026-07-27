@@ -1,10 +1,10 @@
 'use strict';
 
-const assert = require('assert');
+const { describe, it } = require('node:test');
+const assert = require('node:assert');
 const ondusApi = require('../grohe/lib/ondusApi');
 
 describe('lib/ondusApi', function () {
-
     describe('OndusType', function () {
         it('exposes the known appliance type ids', function () {
             assert.strictEqual(ondusApi.OndusType.Sense, 101);
@@ -50,8 +50,12 @@ describe('lib/ondusApi', function () {
 
         it('keeps all documented command fields', function () {
             const command = {
-                valve_open: true, measure_now: true, pressure_measurement_running: false,
-                buzzer_on: true, buzzer_sound_profile: 2, reason_for_change: 1,
+                valve_open: true,
+                measure_now: true,
+                pressure_measurement_running: false,
+                buzzer_on: true,
+                buzzer_sound_profile: 2,
+                reason_for_change: 1,
             };
             const body = session.buildApplianceCommand('a', 103, command);
             assert.deepStrictEqual(body.command, command);
@@ -89,9 +93,18 @@ describe('lib/ondusApi', function () {
                 const body = getResponses ? getResponses[getIndex++] : { notifications: [], continuationToken: null };
                 return Promise.resolve({ text: JSON.stringify(body) });
             };
-            session.put = (url, data) => { calls.push({ verb: 'PUT', url: url, data: data }); return Promise.resolve({}); };
-            session.patch = (url, data) => { calls.push({ verb: 'PATCH', url: url, data: data }); return Promise.resolve({}); };
-            session.del = (url, data) => { calls.push({ verb: 'DELETE', url: url, data: data }); return Promise.resolve({}); };
+            session.put = (url, data) => {
+                calls.push({ verb: 'PUT', url: url, data: data });
+                return Promise.resolve({});
+            };
+            session.patch = (url, data) => {
+                calls.push({ verb: 'PATCH', url: url, data: data });
+                return Promise.resolve({});
+            };
+            session.del = (url, data) => {
+                calls.push({ verb: 'DELETE', url: url, data: data });
+                return Promise.resolve({});
+            };
             return { session: session, calls: calls };
         }
 
@@ -114,7 +127,10 @@ describe('lib/ondusApi', function () {
                 { notifications: [{ notification_id: '2' }], continuationToken: null },
             ]);
             const all = await session.getAllNotifications();
-            assert.deepStrictEqual(all.map((n) => n.notification_id), ['1', '2']);
+            assert.deepStrictEqual(
+                all.map((n) => n.notification_id),
+                ['1', '2']
+            );
             assert.strictEqual(calls.length, 2);
             assert.ok(/continuationToken=p2$/.test(calls[1].url), calls[1].url);
         });
@@ -125,7 +141,9 @@ describe('lib/ondusApi', function () {
             let pages = 0;
             session.get = () => {
                 pages++;
-                return Promise.resolve({ text: JSON.stringify({ notifications: [{ notification_id: 'x' }], continuationToken: 'next' }) });
+                return Promise.resolve({
+                    text: JSON.stringify({ notifications: [{ notification_id: 'x' }], continuationToken: 'next' }),
+                });
             };
             const all = await session.getAllNotifications();
             assert.strictEqual(pages, 20);
@@ -143,7 +161,10 @@ describe('lib/ondusApi', function () {
 
         it('markNotificationsRead PATCHes the array', function () {
             const { session, calls } = spySession();
-            session.markNotificationsRead([{ notification_id: 'a', is_read: true }, { notification_id: 'b', is_read: true }]);
+            session.markNotificationsRead([
+                { notification_id: 'a', is_read: true },
+                { notification_id: 'b', is_read: true },
+            ]);
             const patch = calls.find((c) => c.verb === 'PATCH');
             assert.ok(/\/profile\/notifications$/.test(patch.url), patch.url);
             assert.ok(Array.isArray(patch.data));
@@ -168,7 +189,13 @@ describe('lib/ondusApi', function () {
 
         it('legacy getApplianceNotifications returns account notifications filtered by appliance_id', async function () {
             const { session } = spySession([
-                { notifications: [{ notification_id: '1', appliance_id: 'A' }, { notification_id: '2', appliance_id: 'B' }], continuationToken: null },
+                {
+                    notifications: [
+                        { notification_id: '1', appliance_id: 'A' },
+                        { notification_id: '2', appliance_id: 'B' },
+                    ],
+                    continuationToken: null,
+                },
             ]);
             const response = await session.getApplianceNotifications('l', 'r', 'A');
             const parsed = JSON.parse(response.text);
@@ -201,5 +228,4 @@ describe('lib/ondusApi', function () {
             assert.ok(/Unkown notification category: 10 type: 99999/.test(result.message));
         });
     });
-
 });

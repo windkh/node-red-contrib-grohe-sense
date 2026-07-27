@@ -1,6 +1,7 @@
 'use strict';
 
-const assert = require('assert');
+const { describe, it } = require('node:test');
+const assert = require('node:assert');
 const path = require('path');
 const converters = require('../grohe/lib/converters');
 
@@ -8,7 +9,6 @@ const senseFixture = require(path.join(__dirname, 'fixtures', 'sense-issue-27.js
 const senseGuardFixture = require(path.join(__dirname, 'fixtures', 'senseguard-issue-26.json'));
 
 describe('lib/converters', function () {
-
     describe('getMin / getMax', function () {
         it('returns the new value when the previous one is NaN', function () {
             assert.strictEqual(converters.getMin(5, Number.NaN), 5);
@@ -136,11 +136,16 @@ describe('lib/converters', function () {
         it('includes both sections when present', function () {
             const today = new Date().toISOString();
             const data = {
-                measurement: [
-                    { date: today, temperature: 21, humidity: 42 },
-                ],
+                measurement: [{ date: today, temperature: 21, humidity: 42 }],
                 withdrawals: [
-                    { date: today, waterconsumption: 1, water_cost: 0, energy_cost: 0, hotwater_share: 0, maxflowrate: 1 },
+                    {
+                        date: today,
+                        waterconsumption: 1,
+                        water_cost: 0,
+                        energy_cost: 0,
+                        hotwater_share: 0,
+                        maxflowrate: 1,
+                    },
                 ],
             };
             const result = converters.convertData(data);
@@ -244,8 +249,16 @@ describe('lib/converters', function () {
         });
 
         it('tolerates a completely missing data object', function () {
-            assert.deepStrictEqual(converters.extractAggregated({}), { groupBy: undefined, measurements: [], withdrawals: [] });
-            assert.deepStrictEqual(converters.extractAggregated(undefined), { groupBy: undefined, measurements: [], withdrawals: [] });
+            assert.deepStrictEqual(converters.extractAggregated({}), {
+                groupBy: undefined,
+                measurements: [],
+                withdrawals: [],
+            });
+            assert.deepStrictEqual(converters.extractAggregated(undefined), {
+                groupBy: undefined,
+                measurements: [],
+                withdrawals: [],
+            });
         });
 
         it('preserves both withdrawal shapes (per-event and per-period cost)', function () {
@@ -254,8 +267,19 @@ describe('lib/converters', function () {
                     group_by: 'DAY',
                     measurement: [],
                     withdrawals: [
-                        { starttime: '2026-06-01T10:00:00Z', stoptime: '2026-06-01T10:01:00Z', waterconsumption: 6.7, maxflowrate: 8.9 },
-                        { date: '2026-06-01', waterconsumption: 528.9, water_cost: 0.5, energy_cost: 0.2, hotwater_share: 0 },
+                        {
+                            starttime: '2026-06-01T10:00:00Z',
+                            stoptime: '2026-06-01T10:01:00Z',
+                            waterconsumption: 6.7,
+                            maxflowrate: 8.9,
+                        },
+                        {
+                            date: '2026-06-01',
+                            waterconsumption: 528.9,
+                            water_cost: 0.5,
+                            energy_cost: 0.2,
+                            hotwater_share: 0,
+                        },
                     ],
                 },
             };
@@ -320,5 +344,4 @@ describe('lib/converters', function () {
             assert.deepStrictEqual(converters.convertConsumption(dataLatest), expected.consumption);
         });
     });
-
 });

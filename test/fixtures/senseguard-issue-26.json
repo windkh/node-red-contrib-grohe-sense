@@ -61,12 +61,46 @@
             "data": {
                 "group_by": "day",
                 "measurement": [
-                    { "date": "2026-05-16", "flowrate": 0.4, "pressure": 4.18, "temperature_guard": 18.9, "min_pressure": 3.4, "max_pressure": 5.2, "median_pressure": 4.2, "q1_pressure": 4.1, "q3_pressure": 4.3 },
-                    { "date": "2026-05-15", "flowrate": 0.45, "pressure": 4.22, "temperature_guard": 18.66, "min_pressure": 3.5, "max_pressure": 5.3, "median_pressure": 4.2, "q1_pressure": 4.1, "q3_pressure": 4.3 }
+                    {
+                        "date": "2026-05-16",
+                        "flowrate": 0.4,
+                        "pressure": 4.18,
+                        "temperature_guard": 18.9,
+                        "min_pressure": 3.4,
+                        "max_pressure": 5.2,
+                        "median_pressure": 4.2,
+                        "q1_pressure": 4.1,
+                        "q3_pressure": 4.3
+                    },
+                    {
+                        "date": "2026-05-15",
+                        "flowrate": 0.45,
+                        "pressure": 4.22,
+                        "temperature_guard": 18.66,
+                        "min_pressure": 3.5,
+                        "max_pressure": 5.3,
+                        "median_pressure": 4.2,
+                        "q1_pressure": 4.1,
+                        "q3_pressure": 4.3
+                    }
                 ],
                 "withdrawals": [
-                    { "date": "2026-05-16", "waterconsumption": 528.9, "hotwater_share": 0, "water_cost": 0, "energy_cost": 0, "max_flowrate": 23 },
-                    { "date": "2026-05-15", "waterconsumption": 600.8, "hotwater_share": 0, "water_cost": 0, "energy_cost": 0, "max_flowrate": 19.8 }
+                    {
+                        "date": "2026-05-16",
+                        "waterconsumption": 528.9,
+                        "hotwater_share": 0,
+                        "water_cost": 0,
+                        "energy_cost": 0,
+                        "max_flowrate": 23
+                    },
+                    {
+                        "date": "2026-05-15",
+                        "waterconsumption": 600.8,
+                        "hotwater_share": 0,
+                        "water_cost": 0,
+                        "energy_cost": 0,
+                        "max_flowrate": 19.8
+                    }
                 ]
             }
         }
