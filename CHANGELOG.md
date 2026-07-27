@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.34.3] [2026-07-27]
+
+### upgraded superagent from 7 to 10, which clears the last runtime vulnerability (superagent 7 pulled formidable 2 and with it qs 6.9.3, vulnerable to prototype pollution); npm audit --omit=dev now reports 0 findings; no code change was needed - the login / token / get / post / put / patch / del paths were verified against a local server on both versions and behave identically
+
 ## [0.34.2] [2026-07-27]
 
 ### aligned the repo to the shared node-red-standards: the test suite runs on node:test / node:assert instead of mocha (same 85 tests, mocha removed), eslint moved to the flat config (eslint 9) and prettier + c8 coverage were added, and ci.yml was replaced by the standard node.js.yml running lint, format:check, test and coverage:check on node 20 / 22; **the minimum supported node version is now 20** (engines.node was >=7.6) - installs on node 18 will report EBADENGINE
