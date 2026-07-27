@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.34.5] [2026-07-27]
+
+### dropped the unused url dependency: it was the browserify shim for browser bundles and had no user anywhere in the package (node has node:url built in), so installing this node no longer pulls it - dependabot had offered a version bump for it, which would only have kept the ballast maintained
+
 ## [0.34.4] [2026-07-27]
 
 ### fixed the already-logged-in login path: the 302 branch read the redirect target as response.header.Location, but node lower-cases header names, so session.tokenUrl was silently set to undefined; the login response handling moved into a testable OndusSession.applyLoginResponse so both the web-form (200) and the redirect (302) branch are now covered by tests
