@@ -21,6 +21,65 @@ describe('lib/ondusApi', function () {
         });
     });
 
+    describe('applyLoginResponse', function () {
+        // Node lower-cases response header names, so a login response is delivered
+        // with 'location' / 'set-cookie'.
+        function loginResponse(status, extra) {
+            const response = {
+                status: status,
+                text: '',
+                header: { 'set-cookie': ['AWSALB=abc', 'AWSALBCORS=def'] },
+            };
+            return Object.assign(response, extra);
+        }
+
+        it('takes the action url out of the web form and decodes the entities', function () {
+            const session = new ondusApi.OndusSession();
+            const response = loginResponse(200, {
+                text: '<form action="https://host/auth?session_code=x&amp;tab_id=y" method="post">',
+            });
+
+            assert.strictEqual(session.applyLoginResponse(response), null);
+            assert.strictEqual(session.actionUrl, 'https://host/auth?session_code=x&tab_id=y');
+            assert.deepStrictEqual(session.cookie, ['AWSALB=abc', 'AWSALBCORS=def']);
+        });
+
+        it('reports a missing action and leaves the session alone', function () {
+            const session = new ondusApi.OndusSession();
+            const response = loginResponse(200, { text: '<html>no form here</html>' });
+
+            assert.strictEqual(session.applyLoginResponse(response), 'action not found in webform.');
+            assert.strictEqual(session.actionUrl, undefined);
+            assert.strictEqual(session.cookie, undefined);
+        });
+
+        it('reads the redirect target from the lower-case location header on a 302', function () {
+            const session = new ondusApi.OndusSession();
+            const response = loginResponse(302, {
+                header: {
+                    'set-cookie': ['AWSALB=abc'],
+                    location: 'https://host/v1/sso/auth/realms/idm-apigw/protocol/openid-connect/auth?redirect_uri=x',
+                },
+            });
+
+            assert.strictEqual(session.applyLoginResponse(response), null);
+            assert.strictEqual(
+                session.tokenUrl,
+                'https://host/v1/sso/auth/realms/idm-apigw/protocol/openid-connect/auth?redirect_uri=x'
+            );
+            assert.deepStrictEqual(session.cookie, ['AWSALB=abc']);
+        });
+
+        it('reports any other status', function () {
+            const session = new ondusApi.OndusSession();
+
+            const failure = session.applyLoginResponse(loginResponse(500));
+            assert.ok(/^Failed to get response from https:\/\//.test(failure), failure);
+            assert.strictEqual(session.actionUrl, undefined);
+            assert.strictEqual(session.tokenUrl, undefined);
+        });
+    });
+
     describe('buildApplianceCommand', function () {
         const session = new ondusApi.OndusSession();
 

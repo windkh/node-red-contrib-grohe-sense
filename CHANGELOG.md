@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.34.4] [2026-07-27]
+
+### fixed the already-logged-in login path: the 302 branch read the redirect target as response.header.Location, but node lower-cases header names, so session.tokenUrl was silently set to undefined; the login response handling moved into a testable OndusSession.applyLoginResponse so both the web-form (200) and the redirect (302) branch are now covered by tests
+
 ## [0.34.3] [2026-07-27]
 
 ### upgraded superagent from 7 to 10, which clears the last runtime vulnerability (superagent 7 pulled formidable 2 and with it qs 6.9.3, vulnerable to prototype pollution); npm audit --omit=dev now reports 0 findings; no code change was needed - the login / token / get / post / put / patch / del paths were verified against a local server on both versions and behave identically

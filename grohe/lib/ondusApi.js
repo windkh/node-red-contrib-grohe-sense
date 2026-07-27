@@ -75,32 +75,48 @@ class OndusSession {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.status === 200) {
-                        const page = response.text;
-
-                        const regEx = new RegExp(actionPattern);
-                        const match = regEx.exec(page);
-                        if (match !== null) {
-                            const actionUrlText = match[0].replace(actionPrefix, '');
-                            const encodedActionUrl = actionUrlText.substring(1, actionUrlText.length - 1);
-
-                            session.actionUrl = he.decode(encodedActionUrl);
-                            session.cookie = response.header['set-cookie'];
-                            resolve(response);
-                        } else {
-                            reject('action not found in webform.');
-                        }
-                    } else if (response.status === 302) {
-                        // TODO: not tested!!!
-                        session.cookie = response.header['set-cookie'];
-                        session.tokenUrl = response.header.Location;
+                    const failure = session.applyLoginResponse(response);
+                    if (failure === null) {
                         resolve(response);
                     } else {
-                        reject('Failed to get response from ' + loginUrl);
+                        reject(failure);
                     }
                 }
             });
         });
+    }
+
+    // Applies a login response to the session: either the web form (200) or the
+    // already-logged-in redirect (302). Returns null on success, or the message to
+    // reject with. Split out from getActionUrl so both branches are unit-testable
+    // without reaching the remote loginUrl.
+    applyLoginResponse(response) {
+        let failure = null;
+
+        if (response.status === 200) {
+            const regEx = new RegExp(actionPattern);
+            const match = regEx.exec(response.text);
+
+            if (match === null) {
+                failure = 'action not found in webform.';
+            } else {
+                const actionUrlText = match[0].replace(actionPrefix, '');
+                const encodedActionUrl = actionUrlText.substring(1, actionUrlText.length - 1);
+
+                this.actionUrl = he.decode(encodedActionUrl);
+                this.cookie = response.header['set-cookie'];
+            }
+        } else if (response.status === 302) {
+            // Already logged in: the idp answers with the redirect target instead of
+            // the form. Node lower-cases header names, so this is 'location' — read
+            // as 'Location' it was always undefined.
+            this.cookie = response.header['set-cookie'];
+            this.tokenUrl = response.header.location;
+        } else {
+            failure = 'Failed to get response from ' + loginUrl;
+        }
+
+        return failure;
     }
 
     // POST https://idp2-apigw.cloud.grohe.com/v1/sso/auth/realms/idm-apigw/login-actions/authenticate
