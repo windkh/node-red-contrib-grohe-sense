@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.34.2] [2026-07-27]
+
+### aligned the repo to the shared node-red-standards: the test suite runs on node:test / node:assert instead of mocha (same 85 tests, mocha removed), eslint moved to the flat config (eslint 9) and prettier + c8 coverage were added, and ci.yml was replaced by the standard node.js.yml running lint, format:check, test and coverage:check on node 20 / 22; **the minimum supported node version is now 20** (engines.node was >=7.6) - installs on node 18 will report EBADENGINE
+
 ## [0.34.1] [2026-06-28]
 
 ### removed the GROHE Blue annotations from the command documentation (README + inline help); this node targets Sense / Sense Guard (functional Blue notification texts are unchanged)
