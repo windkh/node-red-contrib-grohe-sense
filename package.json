@@ -56,7 +56,7 @@
         "c8": "^12.0.0",
         "eslint": "^10.8.0",
         "eslint-config-prettier": "^10.1.8",
-        "globals": "^15.0.0",
+        "globals": "^17.0.0",
         "node-red-node-test-helper": "^0.3.4",
         "prettier": "^3.0.0"
     }
