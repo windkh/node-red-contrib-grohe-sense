@@ -18,7 +18,7 @@
     ],
     "scripts": {
         "lint": "eslint .",
-        "test": "node --test --test-force-exit --test-timeout=30000 --test-concurrency=1",
+        "test": "node --test --test-timeout=30000 --test-concurrency=1",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
