@@ -2,10 +2,31 @@ name: Publish to npm
 
 on:
     release:
+        # 'published' — not 'created', which also fires when a *draft* release is saved and
+        # would push unreleased code to npm.
         types: [published]
 
 jobs:
-    publish:
+    # The same gate as CI, re-run here on purpose. A release is cut from a tag, and nothing
+    # guarantees that tag points at a commit CI ever saw — so verify before publishing rather
+    # than assume. npm publish is irreversible: a version cannot be replaced once taken.
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: actions/setup-node@v7
+              with:
+                  # This package declares engines >=20, so 20.x is its own baseline. The
+                  # template pins 22.x for repos that raised their floor above 20.
+                  node-version: 20.x
+            - run: npm ci
+            - run: npm run lint
+            - run: npm run format:check
+            - run: npm test
+
+    publish-npm:
+        # Without this the publish runs regardless of the checks above.
+        needs: build
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v7
@@ -14,7 +35,11 @@ jobs:
                   node-version: 20.x
                   registry-url: https://registry.npmjs.org
             - run: npm ci
-            - run: npm test
-            - run: npm publish
+            # A GitHub release flagged "pre-release" goes to the `beta` dist-tag, so users
+            # on Manage Palette — which tracks `latest` — are not auto-upgraded onto an
+            # unproven build. A plain `npm publish` would move `latest` to the beta and
+            # push it to every install; `latest` cannot be walked back to an earlier
+            # version by publishing, only by a separate dist-tag change.
+            - run: npm publish ${{ github.event.release.prerelease && '--tag beta' || '' }}
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
