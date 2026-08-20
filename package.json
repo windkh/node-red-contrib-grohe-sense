@@ -23,7 +23,9 @@
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "coverage": "c8 npm test",
-        "coverage:check": "c8 --check-coverage npm test"
+        "coverage:check": "c8 --check-coverage npm test",
+        "standards:audit": "nrstd audit",
+        "standards:sync": "nrstd sync"
     },
     "keywords": [
         "node-red",
@@ -58,6 +60,7 @@
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.0.0",
         "node-red-node-test-helper": "^0.3.4",
+        "node-red-standards": "github:windkh/node-red-standards",
         "prettier": "^3.0.0"
     }
 }
