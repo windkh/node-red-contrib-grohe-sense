@@ -1,6 +1,6 @@
 # Synced into target repos by `nrstd sync` as .github/workflows/standards-check.yml.
 # Fails CI if the repo drifts from the shared standard. Tool-neutral (no AI).
-# `nrstd audit` exits non-zero below 10/10, so a repo adopting this should run
+# `nrstd audit` exits non-zero on any gap, so a repo adopting this should run
 # `nrstd sync --write` first — otherwise its next push goes red on pre-existing drift.
 name: Standards check
 on:
