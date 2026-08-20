@@ -6,6 +6,13 @@ on:
     pull_request:
         branches: [master, main]
 
+# Least privilege for GITHUB_TOKEN. Without an explicit block a workflow inherits the
+# repository default, which on many repos is read *and write* to everything -- flagged by
+# CodeQL as actions/missing-workflow-permissions. This job only reads the checkout; the
+# artifact upload authenticates with the runtime token, not GITHUB_TOKEN.
+permissions:
+    contents: read
+
 jobs:
     build:
         runs-on: ubuntu-latest
@@ -32,9 +39,12 @@ jobs:
               uses: actions/upload-artifact@v7
               with:
                   name: coverage-report
-                  # Only the readable report. `coverage/` also holds c8's raw V8 dump in
-                  # tmp/, which is ~97% of the bytes and inspectable by nothing — 23 MB of
-                  # tmp against a 647 kB report in the worst case here.
+                  # Only the readable report, not all of `coverage/`. c8 also writes its
+                  # raw V8 dump to coverage/tmp, which is ~97% of the bytes and inspectable
+                  # by nothing — measured at 23 MB of tmp against a 647 kB report. Uploading
+                  # the directory ships that dead weight on every run for the whole
+                  # retention window, and the step exists to make a failure *readable*.
+                  # Requires c8 to emit a report: `"reporter": ["text", "lcov"]`.
                   path: |
                       coverage/lcov-report
                       coverage/lcov.info
