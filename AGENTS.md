@@ -174,7 +174,21 @@ that polls faster than every 15 minutes**, and don't wire several poll paths ont
 
 - **No test may touch the network.** Inject a fake session / spy object (see `spySession` in
   `test/ondusApi.test.js` and `buildHarness` in `test/senseNode.test.js`) and assert on the recorded
-  verb + URL + body.
+  verb + URL + body. The shared rules reach for `nock` here; it is deliberately **not** a dependency of
+  this repo. Every request goes through `OndusSession`, so injecting a spy session is both smaller and
+  more precise than intercepting sockets — it asserts the verb, URL and body the session was asked to
+  send. Don't add `nock` without a case a spy session cannot cover.
+- `test/entrypoint.test.js` is the **wiring test** the shared rules ask for: a minimal RED stub inline in
+  that file, asserting both node types register. It is what catches a wrong `require` path here instead of
+  at Node-RED start.
+- `buildHarness` in `test/senseNode.test.js` predates the "mock the node object, not the RED runtime"
+  rule and still stubs `RED` to reach the node. Closing that gap means lifting the input dispatcher out of
+  `grohe-sense-node.js` into a plain module taking `(node, msg)` — worth doing when that file is next
+  touched, since the closure is also why it sits at 76% coverage while `lib/` is at 100%.
+- There is **no shared RED harness**. `test-helpers/fake-red.js` came from the standard and was removed
+  again once the standard dropped it: a shared harness invites tests to reach business logic through it,
+  which is what leaves the logic in the closure in the first place. A mock needed here belongs in the test
+  file that needs it.
 - `test/fixtures/*.json` are recorded real API responses ([#26](https://github.com/windkh/node-red-contrib-grohe-sense/issues/26),
   [#27](https://github.com/windkh/node-red-contrib-grohe-sense/issues/27)). They are `.json`, so Node's
   test discovery (which runs every `.js` under `test/`) ignores them.
