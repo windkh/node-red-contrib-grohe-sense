@@ -36,7 +36,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                node-version: [20.x, 22.x]
+                node-version: [22.x, 24.x]
         steps:
             - uses: actions/checkout@v7
             - uses: actions/setup-node@v7
@@ -70,8 +70,8 @@ jobs:
             - uses: actions/setup-node@v7
               with:
                   # Must satisfy the STRICTEST `engines.node` among repos using this standard,
-                  # not this standard's own >=20 baseline. A repo may raise its floor
-                  # (node-red@5 requires >=22.9), and a 20.x pin then warns or fails on
+                  # not this standard's own >=22.13 baseline. A repo may raise its floor
+                  # (undici 8 requires >=22.19), and too low a pin then warns or fails on
                   # `npm ci` -- breaking the release of exactly the repos that are most
                   # current. Raise this when a repo goes past 22. Deliberately a fixed LTS
                   # rather than `node-version-file: package.json`: setup-node resolves a

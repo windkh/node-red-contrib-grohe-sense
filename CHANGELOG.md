@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.35.0] [2026-09-05]
+
+### BREAKING: raised the minimum Node.js version to 22.13 (was 20). Node 20 reached end of life in April 2026 and no longer gets security fixes, so installing on it now reports EBADENGINE - stay on 0.34.5 if you cannot move yet. CI runs on Node 22 and 24. Nothing in the node code changed: no API requiring Node 22 is used, this is a support statement rather than a port, and the reasoning is recorded in doc/architecture/adr/0001-require-node-22.md
+
 ## [0.34.5] [2026-07-27]
 
 ### dropped the unused url dependency: it was the browserify shim for browser bundles and had no user anywhere in the package (node has node:url built in), so installing this node no longer pulls it - dependabot had offered a version bump for it, which would only have kept the ballast maintained
